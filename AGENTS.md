@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+<!-- AGENT-MEMORY:BEGIN -->
+- Floor-plan rules (audit scoring, geometry, layout types) live in plain TS under src/lib with no React/three imports, so they stay unit-testable (src/test/audit.test.ts).
+- 3D uses vanilla three.js via src/lib/scene3d.ts (createViewer/buildLayoutGroup); the 2D canvas and 3D share the same pixel coordinates (20px = 1m, offset 360/260).
+- Projects persist in the `projects` table (layout as jsonb columns, owner-only RLS); auth state comes from src/hooks/useAuth.tsx; dashboard/editor routes are ssr:false because the session lives in the browser.
+<!-- AGENT-MEMORY:END -->
