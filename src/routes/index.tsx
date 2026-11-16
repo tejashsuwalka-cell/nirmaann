@@ -68,7 +68,7 @@ function Index() {
           </div>
           <div className="relative">
             <HeroStage />
-            <div className="glass animate-float absolute -left-4 top-10 hidden items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold sm:flex">
+            <div className="glass animate-float absolute -left-4 top-24 hidden items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold sm:flex">
               <Sun className="h-4 w-4 text-warning" /> Real-time 3D Lighting
             </div>
             <div className="glass animate-float absolute -right-3 bottom-16 hidden items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold sm:flex [animation-delay:1.5s]">
