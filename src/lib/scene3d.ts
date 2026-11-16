@@ -147,7 +147,7 @@ function floorTexture() {
   for (let r = 0; r < 8; r++) {
     let off = (r % 2) * 120;
     for (let i = -1; i < 4; i++) {
-      x.fillStyle = tones[(r * 3 + i + 5) % tones.length];
+      x.fillStyle = tones[(r * 3 + i + 5) % tones.length]!;
       x.fillRect(off + i * 200, r * 64, 198, 62);
       x.fillStyle = "rgba(120,80,40,0.06)";
       for (let k = 0; k < 6; k++) x.fillRect(off + i * 200, r * 64 + 6 + k * 9, 198, 1);
@@ -251,7 +251,7 @@ export interface Viewer {
   dispose: () => void;
 }
 
-export function createViewer(container: HTMLElement, opts: { autoRotate?: boolean; enableZoom?: boolean; onReady?: () => void } = {}): Viewer {
+export function createViewer(container: HTMLElement, opts: { autoRotate?: boolean | undefined; enableZoom?: boolean | undefined; onReady?: (() => void) | undefined } = {}): Viewer {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;

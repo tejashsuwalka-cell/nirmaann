@@ -171,9 +171,9 @@ function Editor() {
                 <div className="glass absolute bottom-10 left-1/2 flex w-[min(560px,92%)] -translate-x-1/2 flex-wrap items-center gap-4 rounded-2xl px-4 py-3">
                   <span className="text-xs font-bold uppercase tracking-wide text-primary">{selFurn.type.replace("_", " ")}</span>
                   <label className="flex min-w-36 flex-1 items-center gap-2 text-xs font-semibold text-muted-foreground">Rotate {selFurn.rotation}°
-                    <Slider min={0} max={360} step={1} value={[selFurn.rotation]} onValueChange={([v]) => patchFurn({ rotation: v })} /></label>
+                    <Slider min={0} max={360} step={1} value={[selFurn.rotation]} onValueChange={([v]) => patchFurn({ rotation: v ?? 0 })} /></label>
                   <label className="flex min-w-36 flex-1 items-center gap-2 text-xs font-semibold text-muted-foreground">Scale {selFurn.scale.toFixed(1)}x
-                    <Slider min={0.5} max={2.5} step={0.1} value={[selFurn.scale]} onValueChange={([v]) => patchFurn({ scale: v })} /></label>
+                    <Slider min={0.5} max={2.5} step={0.1} value={[selFurn.scale]} onValueChange={([v]) => patchFurn({ scale: v ?? 1 })} /></label>
                   <Button variant="secondary" size="sm" onClick={() => patchFurn({ rotation: (selFurn.rotation + 45) % 360 })}><RotateCw />+45°</Button>
                   <Button variant="destructive" size="sm" onClick={deleteSelected}><Trash2 />Delete</Button>
                 </div>

@@ -143,7 +143,7 @@ export function BlueprintCanvas({ layout, onChange, tool, selectedId, onSelect }
   };
 
   const hitTest = (x: number, y: number): string | null => {
-    for (let i = layout.furniture.length - 1; i >= 0; i--) if (hitFurniture(layout.furniture[i], x, y)) return layout.furniture[i].id;
+    for (let i = layout.furniture.length - 1; i >= 0; i--) if (hitFurniture(layout.furniture[i]!, x, y)) return layout.furniture[i]!.id;
     for (const d of layout.doors) if (Math.hypot(d.x - x, d.y - y) < 12) return d.id;
     for (const w of layout.windows) if (Math.hypot(w.x - x, w.y - y) < w.width / 2) return w.id;
     for (const w of layout.walls) if (distanceToSegment(x, y, w.x1, w.y1, w.x2, w.y2) < 10) return w.id;
