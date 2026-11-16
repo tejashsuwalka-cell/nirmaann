@@ -8,10 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NIRMAAN 2.0 — Architectural Precision in 3D" },
-      { name: "description", content: "Draft 2D floor plans, see them instantly in 3D and run automated compliance and Vastu audits — all in your browser." },
+      { title: "NIRMAAN — Architectural Precision in 3D" },
+      {
+        name: "description",
+        content:
+          "Draft 2D floor plans, see them instantly in 3D and run automated compliance and Vastu audits — all in your browser.",
+      },
       { property: "og:title", content: "NIRMAAN 2.0 — Architectural Precision in 3D" },
-      { property: "og:description", content: "Blueprint drafting, real-time 3D visualisation and compliance audits in one studio." },
+      {
+        property: "og:description",
+        content: "Blueprint drafting, real-time 3D visualisation and compliance audits in one studio.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -20,9 +27,21 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
-  { icon: PencilRuler, title: "Precision 2D Blueprinting", body: "Draft walls on a 20px magnetic grid with live metre dimensions, then drop in doors, windows and furniture." },
-  { icon: Box, title: "Interactive 3D WebGL", body: "Every line extrudes into a lit, shadowed 3D room. Orbit, inspect and switch between oak, concrete and glass." },
-  { icon: ClipboardCheck, title: "Automated Compliance", body: "A rule-based audit scores enclosure, access and natural light, with Vastu tips to refine your plan." },
+  {
+    icon: PencilRuler,
+    title: "Precision 2D Blueprinting",
+    body: "Draft walls on a 20px magnetic grid with live metre dimensions, then drop in doors, windows and furniture.",
+  },
+  {
+    icon: Box,
+    title: "Interactive 3D WebGL",
+    body: "Every line extrudes into a lit, shadowed 3D room. Orbit, inspect and switch between oak, concrete and glass.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Automated Compliance",
+    body: "A rule-based audit scores enclosure, access and natural light, with Vastu tips to refine your plan.",
+  },
 ];
 
 function Index() {
@@ -34,11 +53,17 @@ function Index() {
           <Logo />
           <div className="flex items-center gap-2">
             {user ? (
-              <Button variant="hero" asChild><Link to="/dashboard">Dashboard</Link></Button>
+              <Button variant="hero" asChild>
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild><Link to="/login">Sign In</Link></Button>
-                <Button variant="hero" asChild><Link to="/register">Get Started</Link></Button>
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+                <Button variant="hero" asChild>
+                  <Link to="/register">Get Started</Link>
+                </Button>
               </>
             )}
           </div>
@@ -55,11 +80,14 @@ function Index() {
               Architectural Precision, <span className="text-gradient-brand">Elevated in 3D Space</span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
-              Sketch a floor plan in minutes, walk around it in real-time 3D, and know it meets the basics before a single brick is laid.
+              Sketch a floor plan in minutes, walk around it in real-time 3D, and know it meets the basics before a
+              single brick is laid.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button variant="hero" size="lg" asChild className="h-12 px-6">
-                <Link to={user ? "/dashboard" : "/register"}>Launch 3D Studio <ArrowRight /></Link>
+                <Link to={user ? "/dashboard" : "/register"}>
+                  Launch 3D Studio <ArrowRight />
+                </Link>
               </Button>
               <Button variant="glass" size="lg" asChild className="h-12 px-6">
                 <Link to={user ? "/dashboard" : "/login"}>Sign In to Project</Link>
@@ -80,7 +108,9 @@ function Index() {
         <section className="grid gap-5 pb-20 md:grid-cols-3">
           {features.map((f) => (
             <article key={f.title} className="glass rounded-3xl p-6 transition-transform hover:-translate-y-1">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-secondary text-primary"><f.icon className="h-5 w-5" /></span>
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-secondary text-primary">
+                <f.icon className="h-5 w-5" />
+              </span>
               <h3 className="mt-4 text-lg font-bold text-foreground">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
             </article>
@@ -88,9 +118,17 @@ function Index() {
         </section>
 
         <section className="mb-16 overflow-hidden rounded-3xl bg-gradient-brand p-10 text-center shadow-brand sm:p-14">
-          <h2 className="text-3xl font-extrabold tracking-tight text-primary-foreground sm:text-4xl">Your next floor plan starts with one line.</h2>
-          <p className="mx-auto mt-3 max-w-xl text-primary-foreground/80">Free to start. No plugins, no downloads — just your browser.</p>
-          <Button size="lg" asChild className="mt-7 h-12 rounded-xl bg-card px-7 font-bold text-primary hover:bg-card/90">
+          <h2 className="text-3xl font-extrabold tracking-tight text-primary-foreground sm:text-4xl">
+            Your next floor plan starts with one line.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-primary-foreground/80">
+            Free to start. No plugins, no downloads — just your browser.
+          </p>
+          <Button
+            size="lg"
+            asChild
+            className="mt-7 h-12 rounded-xl bg-card px-7 font-bold text-primary hover:bg-card/90"
+          >
             <Link to={user ? "/dashboard" : "/register"}>Start Drafting</Link>
           </Button>
         </section>
