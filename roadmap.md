@@ -18,3 +18,9 @@
 - [x] Fix window geometry/rendering and add floor and wall finishes.
 - [x] Verify the signed-in editor on desktop and mobile.
 - [ ] Prepare free promotion plan (awaiting existing social accounts/audience; paid launch deferred at zero budget).
+
+# Front-page footer
+- [x] Keep scrolling native, add smooth anchor movement, and add a continuous footer animation with pause and reduced-motion support.
+- [x] Add creator credit and draft terms on the front page only.
+- [ ] Add public LinkedIn, email and telephone links (awaiting the user's details).
+- [x] Verify front-page scrolling, footer animation and terms on desktop and mobile.

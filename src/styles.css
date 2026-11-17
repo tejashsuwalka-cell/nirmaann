@@ -205,6 +205,17 @@
 .studio-surface { background: var(--popover); border: 1px solid var(--border); }
 .studio-panel { background: var(--popover); border-left: 1px solid var(--border); }
 .hero-scrim { background: var(--hero-scrim); }
+html:has(.front-page) { scroll-behavior: smooth; }
+.front-page { overscroll-behavior-x: none; }
+.studio-footer { background: var(--popover); }
+.studio-loop-track { animation: studio-loop 36s linear infinite; animation-play-state: paused; }
+.studio-loop[data-visible="true"][data-paused="false"] .studio-loop-track { animation-play-state: running; }
+.studio-loop:focus-within .studio-loop-track { animation-play-state: paused; }
+@keyframes studio-loop { to { transform: translate3d(-50%, 0, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .studio-loop-track { transform: none; }
+  .studio-loop-control { display: none; }
+}
 .google-sign-in { background: var(--google-background); border-color: var(--google-border); color: var(--google-foreground); }
 .courtyard-hero { height: 76svh; min-height: 460px; max-height: 860px; isolation: isolate; }
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {

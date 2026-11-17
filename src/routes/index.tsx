@@ -6,6 +6,7 @@ import { Logo } from "@/components/nirmaan/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import courtyard from "@/assets/nirmaan-courtyard.jpg";
 import courtyardMobile from "@/assets/nirmaan-courtyard-mobile.jpg";
+import { StudioFooter } from "@/components/nirmaan/StudioFooter";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,7 +43,7 @@ function Index() {
     document.addEventListener("visibilitychange", visibility);
     return () => { observer.disconnect(); document.removeEventListener("visibilitychange", visibility); };
   }, []);
-  return <div className="bg-background">
+  return <div id="page-top" className="front-page bg-background">
     <header className="studio-header flex items-center justify-between gap-3 px-5 py-4 sm:px-10"><Logo /><nav className="flex items-center gap-2">{user ? <Button asChild><Link to="/dashboard">Your projects <ArrowUpRight /></Link></Button> : <><Button variant="ghost" asChild><Link to="/login">Sign in</Link></Button><Button asChild><Link to="/register">Open studio <ArrowUpRight /></Link></Button></>}</nav></header>
     <main>
       <section className="courtyard-hero relative overflow-hidden">
@@ -54,11 +55,11 @@ function Index() {
           <div className="mt-5 flex flex-wrap items-end justify-between gap-6"><p className="max-w-md text-lg leading-relaxed">From the first line to a space you can explore.</p><Button variant="outline" size="lg" asChild className="h-12 border-primary-foreground/50 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-foreground"><Link to={user ? "/dashboard" : "/register"}>Enter the studio <ArrowUpRight /></Link></Button></div>
         </div>
       </section>
-      <section className="mx-auto max-w-7xl px-6 py-10 sm:px-10 sm:py-14">
+      <section id="studio-introduction" className="mx-auto max-w-7xl px-6 py-10 sm:px-10 sm:py-14">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6"><h2 className="font-display text-4xl sm:text-5xl">A considered approach to space.</h2><span className="font-mono text-xs text-muted-foreground">DRAW / EXPLORE / REFINE</span></div>
         <div className="grid sm:grid-cols-3">{[["01", "The plan", "Precise walls, openings and furniture."],["02", "The perspective", "A live three-dimensional view of your design."],["03", "The review", "An indicative check of access, light and layout."]].map(([n,title,description]) => <article key={n} className="border-b border-border py-7 sm:pr-8"><span className="font-mono text-xs text-primary">{n}</span><h3 className="mt-4 text-xl">{title}</h3><p className="mt-2 text-sm text-muted-foreground">{description}</p></article>)}</div>
       </section>
     </main>
-    <footer className="flex flex-wrap justify-between gap-3 border-t border-border px-6 py-6 text-xs text-muted-foreground sm:px-10"><span>© {new Date().getFullYear()} NIRMAAN</span><span>Architecture begins with an idea.</span></footer>
+    <StudioFooter />
   </div>;
 }
