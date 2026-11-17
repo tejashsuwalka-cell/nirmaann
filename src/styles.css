@@ -120,6 +120,9 @@
   --plan-grid: oklch(0.96 0.002 160);
   --plan-grid-major: oklch(0.9 0.004 160);
   --hero-scrim: linear-gradient(0deg, oklch(0.15 0.005 160 / 0.78), transparent 85%);
+  --google-background: oklch(1 0 0);
+  --google-border: oklch(0.568 0.005 165);
+  --google-foreground: oklch(0.239 0 0);
   --shadow-glass: 0 8px 32px -8px oklch(0.208 0.042 265.755 / 0.12), 0 1px 2px oklch(0.208 0.042 265.755 / 0.05);
   --shadow-brand: 0 10px 30px -10px color-mix(in oklab, var(--primary) 60%, transparent);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -185,7 +188,9 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
   }
+  html { overflow-x: clip; }
   * { letter-spacing: 0 !important; }
   h1, h2 { font-weight: 500; }
 }
@@ -194,16 +199,22 @@
 .studio-surface { background: var(--popover); border: 1px solid var(--border); }
 .studio-panel { background: var(--popover); border-left: 1px solid var(--border); }
 .hero-scrim { background: var(--hero-scrim); }
+.google-sign-in { background: var(--google-background); border-color: var(--google-border); color: var(--google-foreground); }
+.courtyard-hero { height: 76svh; min-height: 460px; max-height: 860px; isolation: isolate; }
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
   .hero-image {
     object-position: 48% center;
     transform-origin: center;
     animation: courtyard-drift 24s ease-in-out infinite alternate;
+    will-change: transform;
+    backface-visibility: hidden;
+    animation-play-state: paused;
   }
+  .hero-image[data-visible="true"] { animation-play-state: running; }
 }
 @keyframes courtyard-drift {
-  from { transform: scale(1.06) translateX(-1%); }
-  to { transform: scale(1.14) translateX(1%); }
+  from { transform: translate3d(-1%, 0, 0) scale(1.04); }
+  to { transform: translate3d(1%, 0, 0) scale(1.08); }
 }
 .editor-shell { min-height: 100dvh; }
 .editor-grid { display: grid; grid-template-columns: 64px minmax(0, 1fr) 248px; }
@@ -218,7 +229,7 @@
 }
 @media (max-width: 540px) {
   .editor-grid { display: flex; flex-direction: column; }
-  .editor-tools { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+  .editor-tools { display: flex; flex-wrap: wrap; overflow-x: clip; border-right: 0; border-bottom: 1px solid var(--border); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

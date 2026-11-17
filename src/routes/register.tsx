@@ -4,15 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthCard, ErrorBanner } from "@/components/nirmaan/AuthCard";
+import { AuthCard, ErrorBanner, GoogleSignIn } from "@/components/nirmaan/AuthCard";
 import { ALIVE_KEY, REMEMBER_KEY, useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/register")({
   head: () => ({ meta: [
-    { title: "Create Account — NIRMAAN 2.0" },
-    { name: "description", content: "Create your free NIRMAAN 2.0 account and start drafting in 3D." },
-    { property: "og:title", content: "Create Account — NIRMAAN 2.0" },
-    { property: "og:description", content: "Create your free NIRMAAN 2.0 account and start drafting in 3D." },
+    { title: "Create Account — NIRMAAN" },
+    { name: "description", content: "Create your free NIRMAAN account and start drafting in 3D." },
+    { property: "og:title", content: "Create Account — NIRMAAN" },
+    { property: "og:description", content: "Create your free NIRMAAN account and start drafting in 3D." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -52,6 +52,7 @@ function Register() {
 
   return (
     <AuthCard title="Create your studio" subtitle="Start drafting blueprints and 3D rooms in seconds.">
+      <GoogleSignIn />
       <form onSubmit={submit} className="space-y-4">
         <ErrorBanner msg={err} />
         {info && <div className="rounded-xl bg-success-soft px-3 py-2 text-sm font-medium text-success">{info}</div>}

@@ -14,10 +14,10 @@ import { listProjects } from "@/lib/projects";
 export const Route = createFileRoute("/dashboard")({
   ssr: false,
   head: () => ({ meta: [
-    { title: "Your Projects — NIRMAAN 2.0" },
-    { name: "description", content: "Manage your NIRMAAN 2.0 architecture projects." },
-    { property: "og:title", content: "Your Projects — NIRMAAN 2.0" },
-    { property: "og:description", content: "Manage your NIRMAAN 2.0 architecture projects." },
+    { title: "Your Projects — NIRMAAN" },
+    { name: "description", content: "Manage your NIRMAAN architecture projects." },
+    { property: "og:title", content: "Your Projects — NIRMAAN" },
+    { property: "og:description", content: "Manage your NIRMAAN architecture projects." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),

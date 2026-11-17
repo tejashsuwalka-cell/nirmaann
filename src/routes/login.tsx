@@ -4,15 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthCard, ErrorBanner } from "@/components/nirmaan/AuthCard";
+import { AuthCard, ErrorBanner, GoogleSignIn } from "@/components/nirmaan/AuthCard";
 import { ALIVE_KEY, REMEMBER_KEY, useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [
-    { title: "Sign In — NIRMAAN 2.0" },
-    { name: "description", content: "Sign in to your NIRMAAN 2.0 architecture studio." },
-    { property: "og:title", content: "Sign In — NIRMAAN 2.0" },
-    { property: "og:description", content: "Sign in to your NIRMAAN 2.0 architecture studio." },
+    { title: "Sign In — NIRMAAN" },
+    { name: "description", content: "Sign in to your NIRMAAN architecture studio." },
+    { property: "og:title", content: "Sign In — NIRMAAN" },
+    { property: "og:description", content: "Sign in to your NIRMAAN architecture studio." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -46,6 +46,7 @@ function Login() {
 
   return (
     <AuthCard title="Welcome back" subtitle="Sign in to continue drafting your projects.">
+      <GoogleSignIn />
       <form onSubmit={submit} className="space-y-4">
         <ErrorBanner msg={err} />
         <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl bg-card" /></div>
