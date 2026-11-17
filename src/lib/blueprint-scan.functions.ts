@@ -44,7 +44,7 @@ export const scanBlueprint = createServerFn({ method: "POST" })
         output: Output.object({ schema: jsonSchema<ScannedPlan>(SCHEMA as never) }),
         providerOptions: { openai: { store: false, forceReasoning: true, reasoningEffort: "medium", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] } },
       } as never);
-      const plan = (await (result as { output: Promise<ScannedPlan> }).output);
+      const plan = (await (result as unknown as { output: Promise<ScannedPlan> }).output);
       return { plan, error: null };
     } catch (e) {
       console.error("scanBlueprint", e);
