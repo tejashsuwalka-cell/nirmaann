@@ -85,7 +85,7 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [start, setStart] = useState<{ x: number; y: number } | null>(null);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
-  const drag = useRef<{ id: string; x: number; y: number; original: Layout; endpoint?: 1 | 2; pan?: { x: number; y: number } } | null>(null);
+  const drag = useRef<{ id: string; x: number; y: number; original: Layout; endpoint?: 1 | 2 | undefined; pan?: { x: number; y: number } } | null>(null);
   useEffect(() => { if (zoom === 1) setPan({ x: 0, y: 0 }); }, [zoom]);
   useEffect(() => { setStart(null); }, [tool]);
   useEffect(() => {

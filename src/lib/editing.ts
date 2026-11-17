@@ -29,7 +29,7 @@ export function editWall(layout: Layout, id: string, patch: Partial<Wall>): Layo
   if (!old) return layout;
   const wall = { ...old, ...patch };
   if (Math.hypot(wall.x2 - wall.x1, wall.y2 - wall.y1) < 5) return layout;
-  const move = <T extends { x: number; y: number; width: number; wallId?: string }>(item: T): T => {
+  const move = <T extends { x: number; y: number; width: number; wallId?: string | undefined }>(item: T): T => {
     if (item.wallId !== id) return item;
     const s = nearestWall(item.x, item.y, [old]);
     if (!s) return item;
