@@ -19,6 +19,7 @@ interface Props {
   onZoom: (zoom: number) => void;
   snapEnabled: boolean;
   onNotice: (message: string) => void;
+  ghost?: Layout | undefined;
 }
 
 // Canvas drawing colours (blueprint palette from the spec)
@@ -77,7 +78,7 @@ function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x, y + 0.5);
 }
 
-export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedId, onSelect, zoom, onZoom, snapEnabled, onNotice }: Props) {
+export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedId, onSelect, zoom, onZoom, snapEnabled, onNotice, ghost }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [draft, setDraft] = useState<Layout | null>(null);
   const layout = draft ?? savedLayout;
@@ -109,6 +110,11 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
     for (let x = 0; x <= CANVAS_W; x += GRID_SIZE) { ctx.strokeStyle = x % 100 === 0 ? C.gridMajor : C.grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, CANVAS_H); ctx.stroke(); }
     for (let y = 0; y <= CANVAS_H; y += GRID_SIZE) { ctx.strokeStyle = y % 100 === 0 ? C.gridMajor : C.grid; ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(CANVAS_W, y + 0.5); ctx.stroke(); }
 
+    if (ghost) {
+      ctx.save(); ctx.globalAlpha = 0.35; ctx.setLineDash([6, 5]); ctx.strokeStyle = C.swing;
+      for (const w of ghost.walls) { ctx.lineWidth = w.thickness * 0.6; ctx.beginPath(); ctx.moveTo(w.x1, w.y1); ctx.lineTo(w.x2, w.y2); ctx.stroke(); }
+      ctx.restore();
+    }
     ctx.lineCap = "butt";
     for (const w of layout.walls) {
       ctx.strokeStyle = w.id === selectedId ? C.sel : w.color ?? C.wall;
@@ -160,7 +166,7 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
     if (hover && tool !== "select" && tool !== "pan") {
       ctx.beginPath(); ctx.arc(hover.x, hover.y, 4, 0, Math.PI * 2); ctx.fillStyle = C.preview; ctx.fill();
     }
-  }, [layout, selectedId, tool, start, hover, zoom, pan]);
+  }, [layout, selectedId, tool, start, hover, zoom, pan, ghost]);
 
   const toCanvas = (e: React.PointerEvent) => {
     const r = e.currentTarget.getBoundingClientRect();

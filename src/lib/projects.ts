@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Layout } from "./layout-types";
+import type { Floor } from "./floors";
 
-export interface Project extends Layout { id: string; name: string; type: string; owner_id: string; created_at: string; updated_at: string }
+export interface Project extends Layout { id: string; name: string; type: string; owner_id: string; created_at: string; updated_at: string; floors?: Floor[] }
 
 // jsonb columns come back as Json; the app owns their shape.
 export const toProject = (row: Record<string, unknown>) => row as unknown as Project;
@@ -16,9 +17,9 @@ export async function getProject(id: string) {
   if (error) throw error;
   return data ? toProject(data) : null;
 }
-export async function saveProject(id: string, name: string, l: Layout) {
+export async function saveProject(id: string, name: string, l: Layout, floors: Floor[] = []) {
   const { error } = await supabase.from("projects").update({
-    name, walls: l.walls as never, doors: l.doors as never, windows: l.windows as never, furniture: l.furniture as never,
+    name, walls: l.walls as never, doors: l.doors as never, windows: l.windows as never, furniture: l.furniture as never, floors: floors as never,
   }).eq("id", id);
   if (error) throw error;
 }
