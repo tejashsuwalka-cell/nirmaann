@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play, Columns2, Upload, FileDown, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,7 +71,7 @@ function Editor() {
   const fileRef = useRef<HTMLInputElement>(null);
   const scan = useServerFn(scanBlueprint);
   const allFloors = floors.map((f, i) => (i === active ? { ...f, layout } : f));
-  const stack = useMemo(() => showAll && allFloors.length > 1 ? allFloors.map(f => f.layout) : undefined, [showAll, floors, active, layout]);
+  const stack = useMemo(() => showAll && allFloors.length > 1 ? allFloors.map(f => f.layout) : undefined, [showAll, floors, active, layout]); // eslint-disable-line react-hooks/exhaustive-deps
   const latest = useRef({ name, floors: allFloors }); latest.current = { name, floors: allFloors };
   const dirty = loaded && JSON.stringify({ name, floors: allFloors }) !== saved;
   const switchFloor = (i: number) => { if (i === active) return; setFloors(allFloors); setActive(i); history.reset(allFloors[i]!.layout); setSelected(null); setTool("select"); };
