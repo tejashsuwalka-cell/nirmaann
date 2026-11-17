@@ -300,6 +300,11 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 500);
   camera.position.set(14, 12, 14);
   const controls = new OrbitControls(camera, renderer.domElement);
+  renderer.domElement.style.touchAction = "pan-y";
+  const pageScroll = (event: WheelEvent) => {
+    if (!event.ctrlKey && !event.metaKey) event.stopImmediatePropagation();
+  };
+  renderer.domElement.addEventListener("wheel", pageScroll, { capture: true, passive: true });
   controls.enableDamping = true;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   controls.autoRotate = !!opts.autoRotate && !reducedMotion;
@@ -358,6 +363,7 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
       cancelAnimationFrame(raf);
       ro.disconnect();
       controls.dispose();
+      renderer.domElement.removeEventListener("wheel", pageScroll, true);
       if (content) disposeTree(content);
       environmentTarget.dispose();
       disposeTree(ground);

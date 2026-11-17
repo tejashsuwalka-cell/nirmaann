@@ -262,7 +262,7 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
       onWheel={e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); onZoom(Math.max(0.5, Math.min(3, zoom - e.deltaY * 0.002))); } }}
       onPointerLeave={() => setHover(null)}
       onContextMenu={(e) => e.preventDefault()}
-      className={`block h-auto w-full touch-none ${tool === "pan" ? "cursor-grab" : tool === "select" ? "cursor-default" : "cursor-crosshair"}`}
+      className={`block h-auto w-full ${tool === "pan" ? "touch-none cursor-grab" : tool === "select" ? "touch-pan-y cursor-default" : "touch-none cursor-crosshair"}`}
       style={{ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` }}
     />
   );

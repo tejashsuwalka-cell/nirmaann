@@ -12,7 +12,7 @@ export function AuditDrawer({ result, onClose }: { result: AuditResult | null; o
             <SheetTitle className="text-lg font-medium text-foreground">Compliance & Vastu Audit</SheetTitle>
 
           </div>
-          <div className="flex-1 space-y-5 overflow-y-auto p-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5">
             <div>
               <div className="flex items-end justify-between">
                 <span className="text-5xl font-extrabold tracking-tight text-foreground">{result.score}<span className="text-lg text-muted-foreground">/100</span></span>

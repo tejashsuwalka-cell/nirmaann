@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/nirmaan/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import courtyard from "@/assets/nirmaan-courtyard.jpg";
+import courtyardMobile from "@/assets/nirmaan-courtyard-mobile.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,14 +30,26 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { user } = useAuth();
+  const imageRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const image = imageRef.current;
+    if (!image) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      image.dataset.visible = String(!!entry?.isIntersecting && !document.hidden);
+    });
+    const visibility = () => { image.dataset.visible = String(!document.hidden && image.getBoundingClientRect().bottom > 0); };
+    observer.observe(image);
+    document.addEventListener("visibilitychange", visibility);
+    return () => { observer.disconnect(); document.removeEventListener("visibilitychange", visibility); };
+  }, []);
   return <div className="bg-background">
     <header className="studio-header flex items-center justify-between gap-3 px-5 py-4 sm:px-10"><Logo /><nav className="flex items-center gap-2">{user ? <Button asChild><Link to="/dashboard">Your projects <ArrowUpRight /></Link></Button> : <><Button variant="ghost" asChild><Link to="/login">Sign in</Link></Button><Button asChild><Link to="/register">Open studio <ArrowUpRight /></Link></Button></>}</nav></header>
     <main>
-      <section className="relative h-[76dvh] min-h-[460px] max-h-[860px] overflow-hidden">
-        <img src={courtyard} alt="A contemporary courtyard residence with sculptural concrete planes and floor-to-ceiling glass" width={1920} height={1088} className="hero-image absolute inset-0 h-full w-full object-cover" />
+      <section className="courtyard-hero relative overflow-hidden">
+        <picture><source media="(max-width: 767px)" srcSet={courtyardMobile} /><img ref={imageRef} src={courtyard} alt="A contemporary courtyard residence with sculptural concrete planes and floor-to-ceiling glass" width={1920} height={1088} fetchPriority="high" className="hero-image absolute inset-0 h-full w-full object-cover" /></picture>
         <div className="hero-scrim absolute inset-0" />
         <div className="studio-enter absolute inset-x-0 bottom-0 px-6 pb-9 text-primary-foreground sm:px-10 sm:pb-12">
-          <span className="font-mono text-xs">THE ARCHITECTURAL STUDIO / 2.0</span>
+          <span className="font-mono text-xs">THE ARCHITECTURAL STUDIO</span>
           <h1 className="mt-4 font-display text-7xl leading-none sm:text-9xl">NIRMAAN</h1>
           <div className="mt-5 flex flex-wrap items-end justify-between gap-6"><p className="max-w-md text-lg leading-relaxed">From the first line to a space you can explore.</p><Button variant="outline" size="lg" asChild className="h-12 border-primary-foreground/50 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-foreground"><Link to={user ? "/dashboard" : "/register"}>Enter the studio <ArrowUpRight /></Link></Button></div>
         </div>
