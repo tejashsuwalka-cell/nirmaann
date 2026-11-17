@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Box, ClipboardCheck, PencilRuler, ShieldCheck, Sun, ArrowRight } from "lucide-react";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/nirmaan/Logo";
-import { HeroStage } from "@/components/nirmaan/HeroStage";
 import { useAuth } from "@/hooks/useAuth";
+import courtyard from "@/assets/nirmaan-courtyard.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,117 +26,25 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const features = [
-  {
-    icon: PencilRuler,
-    title: "Precision 2D Blueprinting",
-    body: "Draft walls on a 20px magnetic grid with live metre dimensions, then drop in doors, windows and furniture.",
-  },
-  {
-    icon: Box,
-    title: "Interactive 3D WebGL",
-    body: "Every line extrudes into a lit, shadowed 3D room. Orbit, inspect and switch between oak, concrete and glass.",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "Automated Compliance",
-    body: "A rule-based audit scores enclosure, access and natural light, with Vastu tips to refine your plan.",
-  },
-];
-
 function Index() {
   const { user } = useAuth();
-  return (
-    <div className="min-h-screen bg-canvas">
-      <header className="sticky top-0 z-30 px-4 pt-4">
-        <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-4 py-2.5">
-          <Logo />
-          <div className="flex items-center gap-2">
-            {user ? (
-              <Button variant="hero" asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link to="/login">Sign In</Link>
-                </Button>
-                <Button variant="hero" asChild>
-                  <Link to="/register">Get Started</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-4">
-        <section className="grid items-center gap-12 py-16 lg:grid-cols-[1fr_1.1fr] lg:py-24">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-bold uppercase tracking-wider text-secondary-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Blueprint → 3D → Compliance
-            </span>
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
-              Architectural Precision, <span className="text-gradient-brand">Elevated in 3D Space</span>
-            </h1>
-            <p className="mt-5 max-w-lg text-lg text-muted-foreground">
-              Sketch a floor plan in minutes, walk around it in real-time 3D, and know it meets the basics before a
-              single brick is laid.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button variant="hero" size="lg" asChild className="h-12 px-6">
-                <Link to={user ? "/dashboard" : "/register"}>
-                  Launch 3D Studio <ArrowRight />
-                </Link>
-              </Button>
-              <Button variant="glass" size="lg" asChild className="h-12 px-6">
-                <Link to={user ? "/dashboard" : "/login"}>Sign In to Project</Link>
-              </Button>
-            </div>
-          </div>
-          <div className="relative">
-            <HeroStage />
-            <div className="glass animate-float absolute -left-4 top-24 hidden items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold sm:flex">
-              <Sun className="h-4 w-4 text-warning" /> Real-time 3D Lighting
-            </div>
-            <div className="glass animate-float absolute -right-3 bottom-16 hidden items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold sm:flex [animation-delay:1.5s]">
-              <ShieldCheck className="h-4 w-4 text-success" /> Instant Compliance Audit
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-5 pb-20 md:grid-cols-3">
-          {features.map((f) => (
-            <article key={f.title} className="glass rounded-3xl p-6 transition-transform hover:-translate-y-1">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-secondary text-primary">
-                <f.icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-4 text-lg font-bold text-foreground">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
-            </article>
-          ))}
-        </section>
-
-        <section className="mb-16 overflow-hidden rounded-3xl bg-gradient-brand p-10 text-center shadow-brand sm:p-14">
-          <h2 className="text-3xl font-extrabold tracking-tight text-primary-foreground sm:text-4xl">
-            Your next floor plan starts with one line.
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-primary-foreground/80">
-            Free to start. No plugins, no downloads — just your browser.
-          </p>
-          <Button
-            size="lg"
-            asChild
-            className="mt-7 h-12 rounded-xl bg-card px-7 font-bold text-primary hover:bg-card/90"
-          >
-            <Link to={user ? "/dashboard" : "/register"}>Start Drafting</Link>
-          </Button>
-        </section>
-      </main>
-
-      <footer className="border-t border-border/60 py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} NIRMAAN 2.0 · Intelligent Blueprint to 2D/3D Architecture
-      </footer>
-    </div>
-  );
+  return <div className="bg-background">
+    <header className="studio-header flex items-center justify-between gap-3 px-5 py-4 sm:px-10"><Logo /><nav className="flex items-center gap-2">{user ? <Button asChild><Link to="/dashboard">Your projects <ArrowUpRight /></Link></Button> : <><Button variant="ghost" asChild><Link to="/login">Sign in</Link></Button><Button asChild><Link to="/register">Open studio <ArrowUpRight /></Link></Button></>}</nav></header>
+    <main>
+      <section className="relative h-[76dvh] min-h-[460px] max-h-[860px] overflow-hidden">
+        <img src={courtyard} alt="A contemporary courtyard residence with sculptural concrete planes and floor-to-ceiling glass" width={1920} height={1088} className="absolute inset-0 h-full w-full object-cover" />
+        <div className="hero-scrim absolute inset-0" />
+        <div className="studio-enter absolute inset-x-0 bottom-0 px-6 pb-9 text-primary-foreground sm:px-10 sm:pb-12">
+          <span className="font-mono text-xs">THE ARCHITECTURAL STUDIO / 2.0</span>
+          <h1 className="mt-4 font-display text-7xl leading-none sm:text-9xl">NIRMAAN</h1>
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-6"><p className="max-w-md text-lg leading-relaxed">From the first line to a space you can explore.</p><Button variant="outline" size="lg" asChild className="h-12 border-primary-foreground/50 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-foreground"><Link to={user ? "/dashboard" : "/register"}>Enter the studio <ArrowUpRight /></Link></Button></div>
+        </div>
+      </section>
+      <section className="mx-auto max-w-7xl px-6 py-10 sm:px-10 sm:py-14">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6"><h2 className="font-display text-4xl sm:text-5xl">A considered approach to space.</h2><span className="font-mono text-xs text-muted-foreground">DRAW / EXPLORE / REFINE</span></div>
+        <div className="grid sm:grid-cols-3">{[["01", "The plan", "Precise walls, openings and furniture."],["02", "The perspective", "A live three-dimensional view of your design."],["03", "The review", "An indicative check of access, light and layout."]].map(([n,title,description]) => <article key={n} className="border-b border-border py-7 sm:pr-8"><span className="font-mono text-xs text-primary">{n}</span><h3 className="mt-4 text-xl">{title}</h3><p className="mt-2 text-sm text-muted-foreground">{description}</p></article>)}</div>
+      </section>
+    </main>
+    <footer className="flex flex-wrap justify-between gap-3 border-t border-border px-6 py-6 text-xs text-muted-foreground sm:px-10"><span>© {new Date().getFullYear()} NIRMAAN 2.0</span><span>Architecture begins with an idea.</span></footer>
+  </div>;
 }

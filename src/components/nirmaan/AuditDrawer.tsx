@@ -1,5 +1,4 @@
-import { AlertTriangle, CheckCircle2, Lightbulb, Sparkles, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle2, Lightbulb, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { AuditResult } from "@/lib/audit";
 
@@ -9,7 +8,7 @@ export function AuditDrawer({ result, onClose }: { result: AuditResult | null; o
     <Sheet open={open} onOpenChange={value => { if (!value) onClose(); }}><SheetContent className="flex w-[min(420px,100vw)] flex-col gap-0 overflow-hidden p-0" aria-describedby={undefined}>
       {result && (
         <>
-          <div className="flex items-center justify-between border-b border-border/60 p-5">
+          <div className="flex items-center justify-between border-b border-border/60 p-5 pr-12">
             <SheetTitle className="text-lg font-medium text-foreground">Compliance & Vastu Audit</SheetTitle>
 
           </div>
