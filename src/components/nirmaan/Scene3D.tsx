@@ -27,12 +27,13 @@ export function Scene3D({ layout, preset, floorPreset = "oak", autoRotate, stack
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const stacked = !!stack;
+  useEffect(() => { fitted.current = false; }, [stacked]);
   useEffect(() => {
     viewer.current?.setLayout(layout, preset, !fitted.current, floorPreset, stack);
     fitted.current = true;
   }, [layout, preset, floorPreset, stack]);
-  const stacked = !!stack;
-  useEffect(() => { fitted.current = false; }, [stacked]);
+
 
   useEffect(() => { viewer.current?.setAutoRotate(autoRotate); }, [autoRotate]);
 
