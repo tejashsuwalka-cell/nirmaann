@@ -194,6 +194,17 @@
 .studio-surface { background: var(--popover); border: 1px solid var(--border); }
 .studio-panel { background: var(--popover); border-left: 1px solid var(--border); }
 .hero-scrim { background: var(--hero-scrim); }
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .hero-image {
+    object-position: 48% center;
+    transform-origin: center;
+    animation: courtyard-drift 24s ease-in-out infinite alternate;
+  }
+}
+@keyframes courtyard-drift {
+  from { transform: scale(1.06) translateX(-1%); }
+  to { transform: scale(1.14) translateX(1%); }
+}
 .editor-shell { min-height: 100dvh; }
 .editor-grid { display: grid; grid-template-columns: 64px minmax(0, 1fr) 248px; }
 .editor-stage { min-height: 540px; }

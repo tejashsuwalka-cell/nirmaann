@@ -32,7 +32,7 @@ function Index() {
     <header className="studio-header flex items-center justify-between gap-3 px-5 py-4 sm:px-10"><Logo /><nav className="flex items-center gap-2">{user ? <Button asChild><Link to="/dashboard">Your projects <ArrowUpRight /></Link></Button> : <><Button variant="ghost" asChild><Link to="/login">Sign in</Link></Button><Button asChild><Link to="/register">Open studio <ArrowUpRight /></Link></Button></>}</nav></header>
     <main>
       <section className="relative h-[76dvh] min-h-[460px] max-h-[860px] overflow-hidden">
-        <img src={courtyard} alt="A contemporary courtyard residence with sculptural concrete planes and floor-to-ceiling glass" width={1920} height={1088} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={courtyard} alt="A contemporary courtyard residence with sculptural concrete planes and floor-to-ceiling glass" width={1920} height={1088} className="hero-image absolute inset-0 h-full w-full object-cover" />
         <div className="hero-scrim absolute inset-0" />
         <div className="studio-enter absolute inset-x-0 bottom-0 px-6 pb-9 text-primary-foreground sm:px-10 sm:pb-12">
           <span className="font-mono text-xs">THE ARCHITECTURAL STUDIO / 2.0</span>
