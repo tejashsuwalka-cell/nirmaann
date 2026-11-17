@@ -258,3 +258,16 @@ html:has(.front-page) { scroll-behavior: smooth; }
   .editor-split { grid-template-columns: minmax(0, 1fr); }
   .split-scene { height: 420px; }
 }
+
+.house-loader path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: house-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.house-loader .house-loader-walls { animation-delay: 0.15s; }
+.house-loader .house-loader-roof { animation-delay: 0.35s; }
+.house-loader .house-loader-door { animation-delay: 0.55s; }
+@keyframes house-draw {
+  0% { stroke-dashoffset: 1; opacity: 1; }
+  45%, 75% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .house-loader path { stroke-dashoffset: 0 !important; opacity: 1 !important; } }
+.soft-pulse { animation: soft-pulse 1.8s ease-in-out infinite; }
+@keyframes soft-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }

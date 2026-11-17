@@ -1,3 +1,4 @@
+import { HouseLoader } from "@/components/nirmaan/HouseLoader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +53,7 @@ function Login() {
         <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl bg-card" /></div>
         <div className="space-y-1.5"><Label htmlFor="password">Password</Label><Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-11 rounded-xl bg-card" /></div>
         <label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="accent-primary" /> Remember me</label>
-        <Button type="submit" variant="hero" className="h-11 w-full" disabled={busy}>{busy ? "Signing in…" : "Sign In"}</Button>
+        <Button type="submit" variant="hero" className="h-11 w-full" disabled={busy}>{busy && <HouseLoader />}{busy ? "Signing in…" : "Sign In"}</Button>
         <p className="text-center text-sm text-muted-foreground">New here? <Link to="/register" className="font-semibold text-primary hover:underline">Create an account</Link></p>
       </form>
     </AuthCard>

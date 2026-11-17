@@ -1,3 +1,4 @@
+import { HouseLoader } from "@/components/nirmaan/HouseLoader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,7 +78,7 @@ function Dashboard() {
         </div>
 
         {queryError ? <div role="alert" className="mt-10 space-y-4"><p>Could not load your projects.</p><Button variant="outline" onClick={() => refetch()}>Retry</Button></div> : isLoading ? (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="h-64 animate-pulse rounded-md bg-muted" />)}</div>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="soft-pulse grid h-64 place-items-center rounded-md bg-muted text-primary">{i === 0 && <HouseLoader className="size-8" label="Loading projects" />}</div>)}</div>
         ) : !projects?.length ? (
           <div className="mt-10 flex flex-col items-center border-y border-border px-6 py-16 text-center">
             <div className="grid h-20 w-20 place-items-center rounded-3xl bg-secondary text-primary"><Ruler className="h-9 w-9" /></div>

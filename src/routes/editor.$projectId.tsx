@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play, Columns2, Upload, FileDown, Layers } from "lucide-react";
+import { HouseLoader, PageLoader } from "@/components/nirmaan/HouseLoader";
+import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play, Columns2, Upload, FileDown, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BlueprintCanvas, type Tool } from "@/components/nirmaan/BlueprintCanvas";
@@ -174,7 +175,7 @@ function Editor() {
     finally { setScanning(false); if (fileRef.current) fileRef.current.value = ""; }
   };
   if (loadError) return <div className="grid min-h-screen place-items-center"><div className="space-y-5 text-center"><h1 className="text-2xl">{loadError}</h1><Button onClick={() => setRetry(r => r + 1)}>Retry</Button><Button variant="outline" asChild><Link to="/dashboard">Your projects</Link></Button></div></div>;
-  if (!loaded) return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-primary" aria-label="Loading project" /></div>;
+  if (!loaded) return <PageLoader label="Loading project" />;
 
   const selectedLabel = selWall ? "Wall" : selDoor ? "Door" : selWindow ? "Window" : selFurn ? selFurn.type.replace("_", " ") : "Project";
   return <div className="editor-shell bg-background">
@@ -200,7 +201,7 @@ function Editor() {
       {active > 0 && <><Button size="sm" variant="ghost" aria-pressed={ghostOn} className={ghostOn ? "text-primary" : "text-muted-foreground"} onClick={() => setGhostOn(g => !g)}>Show floor below</Button><Button size="sm" variant="ghost" className="text-destructive" onClick={removeFloor}><Trash2 />Delete floor</Button></>}
       <div className="ml-auto flex flex-wrap gap-1">
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" aria-label="Blueprint image" onChange={e => onUpload(e.target.files?.[0])} />
-        <Button size="sm" variant="outline" disabled={scanning} onClick={() => fileRef.current?.click()}>{scanning ? <Loader2 className="animate-spin" /> : <Upload />}{scanning ? "Reading plan…" : "Upload blueprint"}</Button>
+        <Button size="sm" variant="outline" disabled={scanning} onClick={() => fileRef.current?.click()}>{scanning ? <HouseLoader label="Reading blueprint" /> : <Upload />}{scanning ? "Reading plan…" : "Upload blueprint"}</Button>
         <Button size="sm" variant="outline" onClick={() => exportBlueprint("svg")}><FileDown />Blueprint SVG</Button>
         <Button size="sm" variant="outline" onClick={() => exportBlueprint("png")}><FileDown />Blueprint PNG</Button>
       </div>
