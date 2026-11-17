@@ -7,8 +7,8 @@
 
 # Current refinements
 - [x] Enable Lovable authentication and verify initiation.
-- [ ] Add Google sign-in and remove the Lovable button from both account pages.
-- [ ] Remove the version suffix from all NIRMAAN branding.
-- [ ] Fix page and workspace scrolling and reduce background animation lag across window sizes.
-- [ ] Verify phone and desktop scrolling, navigation and account pages.
+- [x] Add Google sign-in and remove the Lovable button from both account pages.
+- [x] Remove the version suffix from all NIRMAAN branding.
+- [x] Fix page and workspace scrolling and reduce background animation lag across window sizes.
+- [x] Verify phone and desktop scrolling, navigation and account pages.
 - [x] Explain where to enable Google login in the account settings.
