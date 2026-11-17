@@ -29,8 +29,9 @@ function Dashboard() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const [title, setTitle] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
 
-  useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
+  useEffect(() => { if (!loading && !user && !signingOut) nav({ to: "/login" }); }, [loading, user, nav, signingOut]);
 
   const { data: projects, isLoading, error: queryError, refetch } = useQuery({ queryKey: ["projects", user?.id], queryFn: listProjects, enabled: !!user });
 
@@ -59,7 +60,7 @@ function Dashboard() {
           <Logo />
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground sm:inline">Logged in as <b className="text-foreground">{displayName(user)}</b></span>
-            <Button variant="ghost" onClick={async () => { try { await signOut(); nav({ to: "/" }); } catch { toast.error("Could not sign out. Please try again."); } }}><LogOut /> Sign Out</Button>
+            <Button variant="ghost" disabled={signingOut} onClick={async () => { setSigningOut(true); try { await signOut(); nav({ to: "/" }); } catch { setSigningOut(false); toast.error("Could not sign out. Please try again."); } }}><LogOut /> Sign Out</Button>
           </div>
         </div>
       </header>
