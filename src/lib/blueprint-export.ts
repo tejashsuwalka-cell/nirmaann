@@ -10,7 +10,7 @@ export function blueprintSvg(layout: Layout, meta: { title: string; floor: strin
   const minX = pts.length ? Math.min(...xs) : 0, maxX = pts.length ? Math.max(...xs) : 400;
   const minY = pts.length ? Math.min(...ys) : 0, maxY = pts.length ? Math.max(...ys) : 300;
   const pad = 70, W = Math.max(640, maxX - minX + pad * 2), H = maxY - minY + pad * 2 + 90;
-  const tx = (x: number) => x - minX + pad, ty = (y: number) => y - minY + pad;
+  const tx = (x: number) => x - minX + (W - (maxX - minX)) / 2, ty = (y: number) => y - minY + pad;
   const esc = (s: string) => s.replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]!);
   const out: string[] = [];
   for (let x = 0; x <= W; x += GRID_SIZE) out.push(`<line x1="${x}" y1="0" x2="${x}" y2="${H - 90}" stroke="${c.faint}" stroke-width="0.5"/>`);
@@ -42,7 +42,7 @@ export function blueprintSvg(layout: Layout, meta: { title: string; floor: strin
   out.push(`<text x="24" y="${by + 26}" fill="${c.ink}" font-size="18" font-family="Georgia, serif">${esc(meta.title)}</text>`);
   out.push(`<text x="24" y="${by + 46}" fill="${c.ink}" font-size="10" font-family="IBM Plex Mono, monospace">${esc(meta.floor.toUpperCase())} · SCALE 1 GRID = 1 m</text>`);
   out.push(`<text x="24" y="${by + 64}" fill="${c.ink}" font-size="10" font-family="IBM Plex Mono, monospace">ENVELOPE ${area.toFixed(1)} m² · ${esc(meta.date)}</text>`);
-  out.push(`<text x="${W - 30}" y="${by + 30}" fill="${c.ink}" font-size="14" text-anchor="middle" font-family="IBM Plex Mono, monospace">N ↑</text>`);
-  out.push(`<text x="${W - 30}" y="${by + 54}" fill="${c.ink}" font-size="9" text-anchor="middle" font-family="IBM Plex Mono, monospace">NIRMAAN</text>`);
+  out.push(`<text x="${W - 50}" y="${by + 30}" fill="${c.ink}" font-size="14" text-anchor="middle" font-family="IBM Plex Mono, monospace">N ↑</text>`);
+  out.push(`<text x="${W - 50}" y="${by + 54}" fill="${c.ink}" font-size="9" text-anchor="middle" font-family="IBM Plex Mono, monospace">NIRMAAN</text>`);
   return { svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="100%" height="100%" fill="${c.paper}"/>${out.join("")}</svg>`, width: W, height: H, area };
 }
