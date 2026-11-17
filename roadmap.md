@@ -10,3 +10,4 @@
 - [ ] Remove the version suffix from all NIRMAAN branding.
 - [ ] Fix page and workspace scrolling and reduce background animation lag across window sizes.
 - [ ] Verify phone and desktop scrolling, navigation and account pages.
+- [x] Explain where to enable Google login in the account settings.
