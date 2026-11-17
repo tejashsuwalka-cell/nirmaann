@@ -375,7 +375,7 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
   return {
     setLayout(layout, preset, refit = false, floorPreset = "oak", stack) {
       if (content) { pivot.remove(content); disposeTree(content); }
-      let root: THREE.Object3D, center: THREE.Vector3, radius: number;
+      let root: THREE.Group, center: THREE.Vector3, radius: number;
       if (stack && stack.length > 1) {
         // Stack every floor one storey apart so the whole building is visible.
         const all = new THREE.Group(); const box3 = new THREE.Box3();
