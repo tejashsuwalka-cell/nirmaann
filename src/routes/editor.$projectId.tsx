@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play, Columns2 } from "lucide-react";
+import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play, Columns2, Upload, FileDown, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BlueprintCanvas, type Tool } from "@/components/nirmaan/BlueprintCanvas";
@@ -15,6 +15,10 @@ import { editWall, openingPosition, removeItem } from "@/lib/editing";
 import { runAudit, type AuditResult } from "@/lib/audit";
 import { FLOOR_PRESETS, MATERIAL_PRESETS, type FloorPreset, type MaterialPreset } from "@/lib/scene3d";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { floorName, planToLayout, type Floor } from "@/lib/floors";
+import { blueprintSvg } from "@/lib/blueprint-export";
+import { scanBlueprint } from "@/lib/blueprint-scan.functions";
 
 export const Route = createFileRoute("/editor/$projectId")({
   ssr: false,
@@ -59,8 +63,18 @@ function Editor() {
   const userId = user?.id;
   const [viewRevision, setViewRevision] = useState(0);
   const [retry, setRetry] = useState(0);
-  const latest = useRef({ name, layout }); latest.current = { name, layout };
-  const dirty = loaded && JSON.stringify({ name, layout }) !== saved;
+  const [floors, setFloors] = useState<Floor[]>([]);
+  const [active, setActive] = useState(0);
+  const [ghostOn, setGhostOn] = useState(true);
+  const [scanning, setScanning] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const scan = useServerFn(scanBlueprint);
+  const allFloors = floors.map((f, i) => (i === active ? { ...f, layout } : f));
+  const latest = useRef({ name, floors: allFloors }); latest.current = { name, floors: allFloors };
+  const dirty = loaded && JSON.stringify({ name, floors: allFloors }) !== saved;
+  const switchFloor = (i: number) => { if (i === active) return; setFloors(allFloors); setActive(i); history.reset(allFloors[i]!.layout); setSelected(null); setTool("select"); };
+  const addFloor = () => { const next = [...allFloors, { id: `floor_${Date.now()}`, name: floorName(allFloors.length), layout: { ...emptyLayout(), walls: layout.walls.map(w => ({ ...w })) } }]; setFloors(next); setActive(next.length - 1); history.reset(next[next.length - 1]!.layout); setSelected(null); toast.success("New floor added with the outer walls of the floor below"); };
+  const removeFloor = () => { if (active === 0 || !confirm(`Delete ${allFloors[active]!.name}?`)) return; const next = allFloors.filter((_, i) => i !== active).map((f, i) => i === 0 ? f : { ...f, name: floorName(i) }); setFloors(next); setActive(active - 1); history.reset(next[active - 1]!.layout); setSelected(null); };
 
   useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
   useEffect(() => {
@@ -70,7 +84,8 @@ function Editor() {
       if (!active) return;
       if (!p) { setLoadError("Project not found"); return; }
       const value = { walls: p.walls ?? [], doors: p.doors ?? [], windows: p.windows ?? [], furniture: p.furniture ?? [] };
-      setName(p.name); history.reset(value); setSaved(JSON.stringify({ name: p.name, layout: value })); setLoaded(true);
+      const fl: Floor[] = [{ id: "ground", name: floorName(0), layout: value }, ...(p.floors ?? [])];
+      setName(p.name); setFloors(fl); setActive(0); history.reset(value); setSaved(JSON.stringify({ name: p.name, floors: fl })); setLoaded(true);
     }).catch(() => { if (active) setLoadError("Could not load this project"); });
     return () => { active = false; };
   }, [userId, projectId, retry, history.reset]);
@@ -81,9 +96,10 @@ function Editor() {
     const snapshot = latest.current; setSaving(true);
     const cleanName = snapshot.name.trim() || "Untitled Project";
     try {
-      await saveProject(projectId, cleanName, snapshot.layout);
+      const [ground, ...upper] = snapshot.floors;
+      await saveProject(projectId, cleanName, ground!.layout, upper);
       if (latest.current.name === snapshot.name) setName(cleanName);
-      setSaved(JSON.stringify({ name: cleanName, layout: snapshot.layout })); toast.success("Project saved");
+      setSaved(JSON.stringify({ name: cleanName, floors: snapshot.floors })); toast.success("Project saved");
     } catch { toast.error("Could not save. Your changes are still here; please try again."); }
     finally { setSaving(false); }
   }, [projectId, saving]);
@@ -127,6 +143,34 @@ function Editor() {
     if (!canvas) return;
     const a = document.createElement("a"); a.download = `${name || "floor-plan"}.png`; a.href = canvas.toDataURL("image/png"); a.click();
   };
+  const exportBlueprint = (format: "svg" | "png") => {
+    const css = getComputedStyle(document.documentElement);
+    const col = (t: string) => { const c = document.createElement("canvas").getContext("2d")!; c.fillStyle = css.getPropertyValue(t).trim(); c.fillRect(0, 0, 1, 1); const [r, g, b] = c.getImageData(0, 0, 1, 1).data; return `rgb(${r},${g},${b})`; };
+    const floor = allFloors[active]!;
+    const { svg, width, height } = blueprintSvg(layout, { title: name || "Untitled Project", floor: floor.name, date: new Date().toLocaleDateString() }, { paper: col("--plan-background"), ink: col("--foreground"), faint: col("--plan-grid") });
+    const file = `${(name || "blueprint").replace(/[^\w-]+/g, "-")}-${floor.name.replace(/\s+/g, "-").toLowerCase()}`;
+    const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+    const download = (href: string, ext: string) => { const a = document.createElement("a"); a.download = `${file}.${ext}`; a.href = href; a.click(); };
+    if (format === "svg") { download(url, "svg"); setTimeout(() => URL.revokeObjectURL(url), 1000); return; }
+    const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); c.width = width * 3; c.height = height * 3; const ctx = c.getContext("2d")!; ctx.scale(3, 3); ctx.drawImage(img, 0, 0); download(c.toDataURL("image/png"), "png"); URL.revokeObjectURL(url); }; img.src = url;
+  };
+  const onUpload = async (file: File | undefined) => {
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error("Please upload a PNG, JPG or WebP image of your plan."); return; }
+    if (file.size > 6_000_000) { toast.error("Please use an image under 6 MB."); return; }
+    const image = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(file); });
+    setScanning(true);
+    try {
+      const { plan, error } = await scan({ data: { image } });
+      if (error || !plan) { toast.error(error ?? "Could not read this blueprint."); return; }
+      const next = planToLayout(plan);
+      if (!next.walls.length) { toast.error("No walls were found. Try a clearer, straight-on image of a floor plan."); return; }
+      if (layout.walls.length && !confirm("Replace this floor with the scanned plan? You can undo this.")) return;
+      update({ ...next, furniture: [] }); setSelected(null); setMode(m => m === "3d" ? "split" : m);
+      toast.success(`Drew ${next.walls.length} walls, ${next.doors.length} doors and ${next.windows.length} windows — check the lengths`);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not read this blueprint."); }
+    finally { setScanning(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
   if (loadError) return <div className="grid min-h-screen place-items-center"><div className="space-y-5 text-center"><h1 className="text-2xl">{loadError}</h1><Button onClick={() => setRetry(r => r + 1)}>Retry</Button><Button variant="outline" asChild><Link to="/dashboard">Your projects</Link></Button></div></div>;
   if (!loaded) return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-primary" aria-label="Loading project" /></div>;
 
@@ -147,6 +191,18 @@ function Editor() {
       <div className="flex flex-wrap gap-1"><Button size="sm" variant={mode === "2d" ? "secondary" : "ghost"} aria-pressed={mode === "2d"} onClick={() => setMode("2d")}><PencilRuler />2D Blueprint</Button><Button size="sm" variant={mode === "3d" ? "secondary" : "ghost"} aria-pressed={mode === "3d"} onClick={() => setMode("3d")}><Box />3D Perspective</Button><Button size="sm" variant={mode === "split" ? "secondary" : "ghost"} aria-pressed={mode === "split"} onClick={() => setMode("split")}><Columns2 />Split view</Button></div>
       <div className="flex items-center gap-1">{mode !== "3d" && <><Button size="icon" variant="ghost" title="Grid snapping" aria-label="Grid snapping" aria-pressed={snapEnabled} className={snapEnabled ? "text-primary" : "text-muted-foreground"} onClick={() => setSnapEnabled(s => !s)}><Magnet /></Button><Button size="icon" variant="ghost" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}><Minus /></Button><span className="w-12 text-center font-mono text-xs">{Math.round(zoom * 100)}%</span><Button size="icon" variant="ghost" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(z => Math.min(3, z + 0.25))}><Plus /></Button><Button size="icon" variant="ghost" aria-label="Reset view" title="Reset view" onClick={() => { setZoom(1); setViewRevision(v => v + 1); }}><Scan /></Button><Button size="icon" variant="ghost" aria-label="Export PNG" title="Export PNG" onClick={exportImage}><Download /></Button></>}</div>
     </div>
+    <div className="studio-header flex flex-wrap items-center gap-1 px-4 py-2" aria-label="Floors">
+      <Layers className="mr-1 size-4 text-muted-foreground" />
+      {allFloors.map((f, i) => <Button key={f.id} size="sm" variant={i === active ? "secondary" : "ghost"} aria-pressed={i === active} onClick={() => switchFloor(i)}>{f.name}</Button>)}
+      <Button size="sm" variant="outline" onClick={addFloor}><Plus />Add floor</Button>
+      {active > 0 && <><Button size="sm" variant="ghost" aria-pressed={ghostOn} className={ghostOn ? "text-primary" : "text-muted-foreground"} onClick={() => setGhostOn(g => !g)}>Show floor below</Button><Button size="sm" variant="ghost" className="text-destructive" onClick={removeFloor}><Trash2 />Delete floor</Button></>}
+      <div className="ml-auto flex flex-wrap gap-1">
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" aria-label="Blueprint image" onChange={e => onUpload(e.target.files?.[0])} />
+        <Button size="sm" variant="outline" disabled={scanning} onClick={() => fileRef.current?.click()}>{scanning ? <Loader2 className="animate-spin" /> : <Upload />}{scanning ? "Reading plan…" : "Upload blueprint"}</Button>
+        <Button size="sm" variant="outline" onClick={() => exportBlueprint("svg")}><FileDown />Blueprint SVG</Button>
+        <Button size="sm" variant="outline" onClick={() => exportBlueprint("png")}><FileDown />Blueprint PNG</Button>
+      </div>
+    </div>
     <main className="editor-grid">
       <nav className="editor-tools gap-1 p-1.5" aria-label="Drawing tools">
         {TOOLS.map(t => <Button key={t.id} variant={tool === t.id ? "secondary" : "ghost"} disabled={mode === "3d"} aria-label={t.label} aria-pressed={tool === t.id} title={t.label} className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px]" onClick={() => { setTool(t.id); setSelected(null); }}><t.icon />{t.label}</Button>)}
@@ -154,7 +210,7 @@ function Editor() {
         <Button variant="ghost" title="Clear layout" aria-label="Clear" className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px] text-destructive" onClick={() => { if (confirm("Clear this layout? You can undo this.")) { update(emptyLayout()); setSelected(null); } }}><Eraser />Clear</Button>
       </nav>
       <section className={`editor-stage relative min-w-0 ${mode === "split" ? "editor-split" : ""}`}>
-        {mode !== "3d" && <div className="min-w-0 p-2 sm:p-6"><BlueprintCanvas key={viewRevision} layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / 01</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div>} {mode !== "2d" && <div className="relative min-w-0"><Scene3D layout={layout} preset={preset} floorPreset={floorPreset} autoRotate={autoRotate} className={mode === "split" ? "split-scene w-full" : "h-[70dvh] min-h-[380px] w-full"} /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></div>}
+        {mode !== "3d" && <div className="min-w-0 p-2 sm:p-6"><BlueprintCanvas key={viewRevision} layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} ghost={active > 0 && ghostOn ? allFloors[active - 1]!.layout : undefined} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / {String(active).padStart(2, "0")} · {allFloors[active]?.name}</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div>} {mode !== "2d" && <div className="relative min-w-0"><Scene3D layout={layout} preset={preset} floorPreset={floorPreset} autoRotate={autoRotate} className={mode === "split" ? "split-scene w-full" : "h-[70dvh] min-h-[380px] w-full"} /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></div>}
       </section>
       <aside className="studio-panel space-y-5 p-5">
         <div className="flex items-center justify-between"><h2 className="text-lg capitalize">{selectedLabel}</h2><span className="font-mono text-[10px] text-muted-foreground">{selected ? "PROPERTIES" : "OVERVIEW"}</span></div>
