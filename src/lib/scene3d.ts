@@ -155,6 +155,19 @@ function buildWindow(win: WindowItem, T: number, wallHeight = WALL_H) {
   return g;
 }
 
+function patternedFloor(preset: "tile" | "terrazzo") {
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const css = getComputedStyle(document.documentElement);
+    ctx.fillStyle = css.getPropertyValue('--surface-floor-stone').trim(); ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = css.getPropertyValue('--surface-floor-grout').trim();
+    if (preset === 'tile') { for (let i = 0; i < 256; i += 128) { ctx.fillRect(i, 0, 2, 256); ctx.fillRect(0, i, 256, 2); } }
+    else for (let i = 0; i < 500; i++) { const x = (i * 73) % 256, y = (i * 131) % 256; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3 + i % 4, y + 2); ctx.lineTo(x + 1, y + 5); ctx.fill(); }
+  }
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.wrapS = texture.wrapT = THREE.RepeatWrapping; return texture;
+}
+
 let floorTex: THREE.CanvasTexture | null = null;
 function floorTexture() {
   if (floorTex) return floorTex;
