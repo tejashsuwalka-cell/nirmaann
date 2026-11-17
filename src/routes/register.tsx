@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AuthCard, ErrorBanner, LovableSignIn } from "@/components/nirmaan/AuthCard";
+import { AuthCard, ErrorBanner, GoogleSignIn } from "@/components/nirmaan/AuthCard";
 import { ALIVE_KEY, REMEMBER_KEY, useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/register")({
@@ -52,7 +52,7 @@ function Register() {
 
   return (
     <AuthCard title="Create your studio" subtitle="Start drafting blueprints and 3D rooms in seconds.">
-      <LovableSignIn />
+      <GoogleSignIn />
       <form onSubmit={submit} className="space-y-4">
         <ErrorBanner msg={err} />
         {info && <div className="rounded-xl bg-success-soft px-3 py-2 text-sm font-medium text-success">{info}</div>}
