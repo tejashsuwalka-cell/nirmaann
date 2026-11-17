@@ -8,6 +8,13 @@
       "when": 1794824695918,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794916867545,
+      "tag": "0001_add_project_floors",
+      "breakpoints": true
     }
   ]
 }

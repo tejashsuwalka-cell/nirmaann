@@ -1,0 +1,1 @@
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS floors jsonb NOT NULL DEFAULT '[]'::jsonb;

@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           doors: Json
+          floors: Json
           furniture: Json
           id: string
           name: string
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           created_at?: string
           doors?: Json
+          floors?: Json
           furniture?: Json
           id?: string
           name?: string
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           created_at?: string
           doors?: Json
+          floors?: Json
           furniture?: Json
           id?: string
           name?: string
