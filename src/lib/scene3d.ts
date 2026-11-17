@@ -206,7 +206,7 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset, floorPr
 
   const texture = floorPreset === "oak" || floorPreset === "walnut" ? floorTexture().clone() : patternedFloor(floorPreset);
   texture.repeat.set((maxX - minX + 20) / 160, (maxY - minY + 20) / 160);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX + 20, maxY - minY + 20), new THREE.MeshStandardMaterial({ map: texture, color: floorPreset === "walnut" ? surfaceColor('--surface-floor-walnut') : undefined, roughness: 0.75 }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX + 20, maxY - minY + 20), new THREE.MeshStandardMaterial({ map: texture, color: floorPreset === "walnut" ? surfaceColor('--surface-floor-walnut') : new THREE.Color(), roughness: 0.75 }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.set((minX + maxX) / 2 - OFFSET_X, 0.1, (minY + maxY) / 2 - OFFSET_Z);
   floor.receiveShadow = true;
