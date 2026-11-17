@@ -282,7 +282,7 @@ function disposeTree(o: THREE.Object3D) {
 }
 
 export interface Viewer {
-  setLayout: (layout: Layout, preset: MaterialPreset, refit?: boolean, floorPreset?: FloorPreset) => void;
+  setLayout: (layout: Layout, preset: MaterialPreset, refit?: boolean, floorPreset?: FloorPreset, stack?: Layout[]) => void;
   setAutoRotate: (on: boolean) => void;
   setParallax: (x: number, y: number) => void;
   dispose: () => void;
@@ -373,9 +373,16 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
   loop();
 
   return {
-    setLayout(layout, preset, refit = false, floorPreset = "oak") {
+    setLayout(layout, preset, refit = false, floorPreset = "oak", stack) {
       if (content) { pivot.remove(content); disposeTree(content); }
-      const { root, center, radius } = buildLayoutGroup(layout, preset, floorPreset);
+      let root: THREE.Object3D, center: THREE.Vector3, radius: number;
+      if (stack && stack.length > 1) {
+        // Stack every floor one storey apart so the whole building is visible.
+        const all = new THREE.Group(); const box3 = new THREE.Box3();
+        stack.forEach((l, i) => { const b = buildLayoutGroup(l, preset, floorPreset); b.root.position.y = i * (WALL_H + 1) * PX; all.add(b.root); });
+        box3.setFromObject(all); const size = box3.getSize(new THREE.Vector3());
+        root = all; center = box3.getCenter(new THREE.Vector3()); radius = size.length() / 2;
+      } else ({ root, center, radius } = buildLayoutGroup(layout, preset, floorPreset));
       content = root;
       pivot.add(root);
       if (refit) {
