@@ -22,5 +22,6 @@
 # Front-page footer
 - [x] Keep scrolling native, add smooth anchor movement, and add a continuous footer animation with pause and reduced-motion support.
 - [x] Add creator credit and draft terms on the front page only.
-- [ ] Add public LinkedIn, email and telephone links (awaiting the user's details).
+- [x] Add the supplied public LinkedIn profile link.
+- [x] Add the supplied public email and telephone links.
 - [x] Verify front-page scrolling, footer animation and terms on desktop and mobile.
