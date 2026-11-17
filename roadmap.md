@@ -4,3 +4,9 @@
 - [x] Improve canvas interaction, zoom, snapping and 3D stability.
 - [x] Refine the studio design from the three architectural references.
 - [x] Run rule tests and desktop/mobile workflow checks.
+
+# Current refinements
+- [ ] Finish Lovable sign-in checks on both account pages.
+- [ ] Remove the version suffix from all NIRMAAN branding.
+- [ ] Fix page and workspace scrolling and reduce background animation lag across window sizes.
+- [ ] Verify phone and desktop scrolling, navigation and account pages.
