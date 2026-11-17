@@ -17,4 +17,4 @@
 - [x] Add simultaneous 2D/3D split view with mobile stacking.
 - [x] Fix window geometry/rendering and add floor and wall finishes.
 - [x] Verify the signed-in editor on desktop and mobile.
-- [ ] Plan the first campaign (zero budget blocks paid launch; awaiting free-promotion or draft-only choice).
+- [ ] Prepare free promotion plan (awaiting existing social accounts/audience; paid launch deferred at zero budget).
