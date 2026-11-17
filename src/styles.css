@@ -82,6 +82,12 @@
 }
 
 :root {
+  --surface-wall-sage: oklch(0.72 0.04 150);
+  --surface-wall-brick: oklch(0.6 0.11 40);
+  --surface-wall-plaster: oklch(0.94 0.014 80);
+  --surface-floor-walnut: oklch(0.55 0.08 60);
+  --surface-floor-stone: oklch(0.84 0.014 95);
+  --surface-floor-grout: oklch(0.6 0.02 120);
   --radius: 0.375rem;
   --background: oklch(0.984 0.003 247.858);
   --foreground: oklch(0.22 0.006 160);
@@ -233,4 +239,11 @@
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+.editor-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.split-scene { height: 480px; }
+@media (max-width: 1100px) {
+  .editor-split { grid-template-columns: minmax(0, 1fr); }
+  .split-scene { height: 420px; }
 }

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Layout } from "@/lib/layout-types";
-import { createViewer, type MaterialPreset, type Viewer } from "@/lib/scene3d";
+import { createViewer, type FloorPreset, type MaterialPreset, type Viewer } from "@/lib/scene3d";
 
-interface Props { layout: Layout; preset: MaterialPreset; autoRotate: boolean; parallax?: boolean; enableZoom?: boolean; className?: string }
+interface Props { layout: Layout; preset: MaterialPreset; floorPreset?: FloorPreset; autoRotate: boolean; parallax?: boolean; enableZoom?: boolean; className?: string }
 
-export function Scene3D({ layout, preset, autoRotate, parallax, enableZoom, className }: Props) {
+export function Scene3D({ layout, preset, floorPreset = "oak", autoRotate, parallax, enableZoom, className }: Props) {
   const [error, setError] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const viewer = useRef<Viewer | null>(null);
@@ -28,9 +28,9 @@ export function Scene3D({ layout, preset, autoRotate, parallax, enableZoom, clas
   }, []);
 
   useEffect(() => {
-    viewer.current?.setLayout(layout, preset, !fitted.current);
+    viewer.current?.setLayout(layout, preset, !fitted.current, floorPreset);
     fitted.current = true;
-  }, [layout, preset]);
+  }, [layout, preset, floorPreset]);
 
   useEffect(() => { viewer.current?.setAutoRotate(autoRotate); }, [autoRotate]);
 

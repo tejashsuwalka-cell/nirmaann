@@ -3,12 +3,29 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import type { Door, FurnitureItem, Layout, WindowItem } from "./layout-types";
 import { FURNITURE_SIZE, OFFSET_X, OFFSET_Z, nearestWall } from "./geometry";
+import { windowBounds } from './window-geometry';
 
-export type MaterialPreset = "oak" | "concrete" | "glass";
+export type MaterialPreset = "oak" | "concrete" | "glass" | "sage" | "brick" | "plaster";
+export type FloorPreset = "oak" | "walnut" | "tile" | "terrazzo";
+export const FLOOR_PRESETS: Record<FloorPreset, { label: string }> = {
+  oak: { label: "Natural oak" }, walnut: { label: "Walnut planks" }, tile: { label: "Stone tiles" }, terrazzo: { label: "Terrazzo" },
+};
+function surfaceColor(token: string) {
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.Color();
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  ctx.fillRect(0, 0, 1, 1);
+  const pixel = ctx.getImageData(0, 0, 1, 1).data;
+  return new THREE.Color().setRGB((pixel[0] ?? 0) / 255, (pixel[1] ?? 0) / 255, (pixel[2] ?? 0) / 255, THREE.SRGBColorSpace);
+}
 export const MATERIAL_PRESETS: Record<MaterialPreset, { label: string; color: string; metalness: number; roughness: number; transmission: number; ior?: number }> = {
   oak: { label: "Minimal White (Oak)", color: "#ffffff", metalness: 0.05, roughness: 0.4, transmission: 0 },
   concrete: { label: "Polished Concrete", color: "#e2e8f0", metalness: 0.1, roughness: 0.6, transmission: 0 },
   glass: { label: "Architectural Glass", color: "#93c5fd", metalness: 0.1, roughness: 0.1, transmission: 0.85, ior: 1.5 },
+  sage: { label: "Sage paint", color: "", metalness: 0, roughness: 0.85, transmission: 0 },
+  brick: { label: "Terracotta brick", color: "", metalness: 0, roughness: 0.95, transmission: 0 },
+  plaster: { label: "Soft plaster", color: "", metalness: 0, roughness: 0.9, transmission: 0 },
 };
 
 const WALL_H = 56;
@@ -37,7 +54,7 @@ function cyl(rt: number, rb: number, h: number, mat: THREE.Material, x = 0, y = 
 function wallMaterial(p: MaterialPreset) {
   const c = MATERIAL_PRESETS[p];
   return new THREE.MeshPhysicalMaterial({
-    color: c.color, metalness: c.metalness, roughness: c.roughness,
+    color: c.color || surfaceColor(`--surface-wall-${p}`), metalness: c.metalness, roughness: c.roughness,
     transmission: c.transmission, ior: c.ior ?? 1.5, thickness: 4,
     transparent: c.transmission > 0, opacity: c.transmission > 0 ? 0.92 : 1,
   });
@@ -121,11 +138,10 @@ function buildDoor(door: Door, T: number) {
 }
 function buildWindow(win: WindowItem, T: number, wallHeight = WALL_H) {
   const g = new THREE.Group();
-  const sill = Math.min(win.sillHeight ?? SILL_H, wallHeight - 6);
-  const top = Math.min(sill + (win.height ?? WIN_TOP - SILL_H), wallHeight - 2);
-  const w = win.width, h = Math.max(2, top - sill);
+  const { sill, top, height: h } = windowBounds(win, wallHeight);
+  const w = Math.max(4, win.width);
   const stone = std("#d6d3d1", 0.85), frame = std("#1f2937", 0.4, 0.3);
-  const glass = new THREE.MeshPhysicalMaterial({ color: "#dbeafe", transmission: 0.85, ior: 1.5, roughness: 0.05, metalness: 0, thickness: 1, transparent: true, opacity: 0.5 });
+  const glass = new THREE.MeshPhysicalMaterial({ color: "#dbeafe", transmission: 0.85, ior: 1.5, roughness: 0.08, metalness: 0, thickness: 0.6, transparent: false, opacity: 1 });
   g.add(box(w + 6, 2, T + 6, stone, 0, sill - 1, 0));
   g.add(box(w, 1.6, T, frame, 0, top - 0.8, 0));
   g.add(box(w, 1.2, T, frame, 0, sill + 0.6, 0));
@@ -137,6 +153,19 @@ function buildWindow(win: WindowItem, T: number, wallHeight = WALL_H) {
   g.add(box(0.8, h - 2, 1.2, frame, 0, sill + h / 2, 0));
   g.add(box(w - 2, 0.8, 1.2, frame, 0, sill + h / 2, 0));
   return g;
+}
+
+function patternedFloor(preset: "tile" | "terrazzo") {
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const css = getComputedStyle(document.documentElement);
+    ctx.fillStyle = css.getPropertyValue('--surface-floor-stone').trim(); ctx.fillRect(0, 0, 256, 256);
+    ctx.fillStyle = css.getPropertyValue('--surface-floor-grout').trim();
+    if (preset === 'tile') { for (let i = 0; i < 256; i += 128) { ctx.fillRect(i, 0, 2, 256); ctx.fillRect(0, i, 256, 2); } }
+    else for (let i = 0; i < 500; i++) { const x = (i * 73) % 256, y = (i * 131) % 256; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3 + i % 4, y + 2); ctx.lineTo(x + 1, y + 5); ctx.fill(); }
+  }
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.wrapS = texture.wrapT = THREE.RepeatWrapping; return texture;
 }
 
 let floorTex: THREE.CanvasTexture | null = null;
@@ -163,7 +192,7 @@ function floorTexture() {
   return floorTex;
 }
 
-export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
+export function buildLayoutGroup(layout: Layout, preset: MaterialPreset, floorPreset: FloorPreset = "oak") {
   const root = new THREE.Group();
   root.scale.setScalar(PX);
   const wallMat = wallMaterial(preset);
@@ -175,8 +204,9 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
   layout.furniture.forEach((f) => extend(f.x, f.y));
   if (!isFinite(minX)) { minX = 260; maxX = 460; minY = 160; maxY = 360; }
 
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX + 20, maxY - minY + 20), new THREE.MeshStandardMaterial({ map: floorTexture(), roughness: 0.55 }));
-  floorTexture().repeat.set((maxX - minX + 20) / 160, (maxY - minY + 20) / 160);
+  const texture = floorPreset === "oak" || floorPreset === "walnut" ? floorTexture().clone() : patternedFloor(floorPreset);
+  texture.repeat.set((maxX - minX + 20) / 160, (maxY - minY + 20) / 160);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX + 20, maxY - minY + 20), new THREE.MeshStandardMaterial({ map: texture, color: floorPreset === "walnut" ? surfaceColor('--surface-floor-walnut') : new THREE.Color(), roughness: 0.75 }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.set((minX + maxX) / 2 - OFFSET_X, 0.1, (minY + maxY) / 2 - OFFSET_Z);
   floor.receiveShadow = true;
@@ -194,8 +224,8 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
       grp.rotation.y = -s.angle;
       const list = ops.get(s.wall.id) ?? [];
       const win = item as WindowItem;
-      const sill = Math.min(win.sillHeight ?? SILL_H, (s.wall.height ?? WALL_H) - 6);
-      list.push({ along: s.along, hw: item.width / 2 + (kind === "door" ? 2 : 0), kind, sill, top: Math.min(sill + (win.height ?? WIN_TOP - SILL_H), (s.wall.height ?? WALL_H) - 2) });
+      const { sill, top } = windowBounds(win, s.wall.height ?? WALL_H);
+      list.push({ along: s.along, hw: item.width / 2 + (kind === "door" ? 2 : 0), kind, sill, top });
       ops.set(s.wall.id, list);
     } else {
       grp.position.set(item.x - OFFSET_X, 0, item.y - OFFSET_Z);
@@ -211,8 +241,10 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
     const ux = dx / len, uy = dy / len, angle = Math.atan2(dy, dx), T = w.thickness, height = w.height ?? WALL_H;
     const seg = (s0: number, s1: number, y0: number, y1: number, extra = 0) => {
       if (s1 - s0 < 0.5 || y1 - y0 < 0.5) return;
-      const mid = (s0 + s1) / 2;
-      const m = box(s1 - s0 + extra, y1 - y0, T, wallMat, w.x1 + ux * mid - OFFSET_X, (y0 + y1) / 2, w.y1 + uy * mid - OFFSET_Z);
+      const left = extra && s0 === 0 ? T / 2 : 0;
+      const right = s1 === len ? T / 2 : 0;
+      const mid = (s0 - left + s1 + right) / 2;
+      const m = box(s1 - s0 + left + right, y1 - y0, T, wallMat, w.x1 + ux * mid - OFFSET_X, (y0 + y1) / 2, w.y1 + uy * mid - OFFSET_Z);
       m.rotation.y = -angle;
       root.add(m);
     };
@@ -245,12 +277,12 @@ function disposeTree(o: THREE.Object3D) {
     if (m.geometry) m.geometry.dispose();
     const mat = m.material as THREE.Material | THREE.Material[] | undefined;
     if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
-    else if (mat) mat.dispose();
+    else if (mat) { if (mat instanceof THREE.MeshStandardMaterial) mat.map?.dispose(); mat.dispose(); }
   });
 }
 
 export interface Viewer {
-  setLayout: (layout: Layout, preset: MaterialPreset, refit?: boolean) => void;
+  setLayout: (layout: Layout, preset: MaterialPreset, refit?: boolean, floorPreset?: FloorPreset) => void;
   setAutoRotate: (on: boolean) => void;
   setParallax: (x: number, y: number) => void;
   dispose: () => void;
@@ -341,9 +373,9 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
   loop();
 
   return {
-    setLayout(layout, preset, refit = false) {
+    setLayout(layout, preset, refit = false, floorPreset = "oak") {
       if (content) { pivot.remove(content); disposeTree(content); }
-      const { root, center, radius } = buildLayoutGroup(layout, preset);
+      const { root, center, radius } = buildLayoutGroup(layout, preset, floorPreset);
       content = root;
       pivot.add(root);
       if (refit) {

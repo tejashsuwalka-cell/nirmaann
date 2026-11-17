@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play } from "lucide-react";
+import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play, Columns2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BlueprintCanvas, type Tool } from "@/components/nirmaan/BlueprintCanvas";
@@ -13,7 +13,7 @@ import { emptyLayout, type Layout } from "@/lib/layout-types";
 import { presetLayout, GRID_SIZE } from "@/lib/geometry";
 import { editWall, openingPosition, removeItem } from "@/lib/editing";
 import { runAudit, type AuditResult } from "@/lib/audit";
-import { MATERIAL_PRESETS, type MaterialPreset } from "@/lib/scene3d";
+import { FLOOR_PRESETS, MATERIAL_PRESETS, type FloorPreset, type MaterialPreset } from "@/lib/scene3d";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/editor/$projectId")({
@@ -45,10 +45,11 @@ function Editor() {
   const [name, setName] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [mode, setMode] = useState<"2d" | "3d">("2d");
+  const [mode, setMode] = useState<"2d" | "3d" | "split">("2d");
   const [tool, setTool] = useState<Tool>("select");
   const [selected, setSelected] = useState<string | null>(null);
   const [preset, setPreset] = useState<MaterialPreset>("oak");
+  const [floorPreset, setFloorPreset] = useState<FloorPreset>("oak");
   const [autoRotate, setAutoRotate] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [snapEnabled, setSnapEnabled] = useState(true);
@@ -143,21 +144,21 @@ function Editor() {
       </div>
     </header>
     <div className="studio-header flex flex-wrap items-center justify-between gap-2 px-4 py-2">
-      <div className="flex gap-1"><Button size="sm" variant={mode === "2d" ? "secondary" : "ghost"} aria-pressed={mode === "2d"} onClick={() => setMode("2d")}><PencilRuler />2D Blueprint</Button><Button size="sm" variant={mode === "3d" ? "secondary" : "ghost"} aria-pressed={mode === "3d"} onClick={() => setMode("3d")}><Box />3D Perspective</Button></div>
-      <div className="flex items-center gap-1">{mode === "2d" && <><Button size="icon" variant="ghost" title="Grid snapping" aria-label="Grid snapping" aria-pressed={snapEnabled} className={snapEnabled ? "text-primary" : "text-muted-foreground"} onClick={() => setSnapEnabled(s => !s)}><Magnet /></Button><Button size="icon" variant="ghost" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}><Minus /></Button><span className="w-12 text-center font-mono text-xs">{Math.round(zoom * 100)}%</span><Button size="icon" variant="ghost" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(z => Math.min(3, z + 0.25))}><Plus /></Button><Button size="icon" variant="ghost" aria-label="Reset view" title="Reset view" onClick={() => { setZoom(1); setViewRevision(v => v + 1); }}><Scan /></Button><Button size="icon" variant="ghost" aria-label="Export PNG" title="Export PNG" onClick={exportImage}><Download /></Button></>}</div>
+      <div className="flex flex-wrap gap-1"><Button size="sm" variant={mode === "2d" ? "secondary" : "ghost"} aria-pressed={mode === "2d"} onClick={() => setMode("2d")}><PencilRuler />2D Blueprint</Button><Button size="sm" variant={mode === "3d" ? "secondary" : "ghost"} aria-pressed={mode === "3d"} onClick={() => setMode("3d")}><Box />3D Perspective</Button><Button size="sm" variant={mode === "split" ? "secondary" : "ghost"} aria-pressed={mode === "split"} onClick={() => setMode("split")}><Columns2 />Split view</Button></div>
+      <div className="flex items-center gap-1">{mode !== "3d" && <><Button size="icon" variant="ghost" title="Grid snapping" aria-label="Grid snapping" aria-pressed={snapEnabled} className={snapEnabled ? "text-primary" : "text-muted-foreground"} onClick={() => setSnapEnabled(s => !s)}><Magnet /></Button><Button size="icon" variant="ghost" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}><Minus /></Button><span className="w-12 text-center font-mono text-xs">{Math.round(zoom * 100)}%</span><Button size="icon" variant="ghost" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(z => Math.min(3, z + 0.25))}><Plus /></Button><Button size="icon" variant="ghost" aria-label="Reset view" title="Reset view" onClick={() => { setZoom(1); setViewRevision(v => v + 1); }}><Scan /></Button><Button size="icon" variant="ghost" aria-label="Export PNG" title="Export PNG" onClick={exportImage}><Download /></Button></>}</div>
     </div>
     <main className="editor-grid">
       <nav className="editor-tools gap-1 p-1.5" aria-label="Drawing tools">
-        {TOOLS.map(t => <Button key={t.id} variant={tool === t.id ? "secondary" : "ghost"} disabled={mode !== "2d"} aria-label={t.label} aria-pressed={tool === t.id} title={t.label} className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px]" onClick={() => { setTool(t.id); setSelected(null); }}><t.icon />{t.label}</Button>)}
+        {TOOLS.map(t => <Button key={t.id} variant={tool === t.id ? "secondary" : "ghost"} disabled={mode === "3d"} aria-label={t.label} aria-pressed={tool === t.id} title={t.label} className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px]" onClick={() => { setTool(t.id); setSelected(null); }}><t.icon />{t.label}</Button>)}
         <Button variant="ghost" title="Load sample room" aria-label="Preset" className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px]" onClick={() => { if (!layout.walls.length || confirm("Replace this layout with the sample room? You can undo this.")) { update(presetLayout()); setSelected(null); } }}><Wand2 />Preset</Button>
         <Button variant="ghost" title="Clear layout" aria-label="Clear" className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px] text-destructive" onClick={() => { if (confirm("Clear this layout? You can undo this.")) { update(emptyLayout()); setSelected(null); } }}><Eraser />Clear</Button>
       </nav>
-      <section className="editor-stage relative min-w-0">
-        {mode === "2d" ? <div className="p-2 sm:p-6"><BlueprintCanvas key={viewRevision} layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / 01</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div> : <><Scene3D layout={layout} preset={preset} autoRotate={autoRotate} className="h-[70dvh] min-h-[380px] w-full" /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></>}
+      <section className={`editor-stage relative min-w-0 ${mode === "split" ? "editor-split" : ""}`}>
+        {mode !== "3d" && <div className="min-w-0 p-2 sm:p-6"><BlueprintCanvas key={viewRevision} layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / 01</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div>} {mode !== "2d" && <div className="relative min-w-0"><Scene3D layout={layout} preset={preset} floorPreset={floorPreset} autoRotate={autoRotate} className={mode === "split" ? "split-scene w-full" : "h-[70dvh] min-h-[380px] w-full"} /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></div>}
       </section>
       <aside className="studio-panel space-y-5 p-5">
         <div className="flex items-center justify-between"><h2 className="text-lg capitalize">{selectedLabel}</h2><span className="font-mono text-[10px] text-muted-foreground">{selected ? "PROPERTIES" : "OVERVIEW"}</span></div>
-        {mode === "3d" ? <div className="space-y-2"><h3 className="text-xs text-muted-foreground">Wall finish</h3>{(Object.keys(MATERIAL_PRESETS) as MaterialPreset[]).map(k => <Button key={k} variant={preset === k ? "secondary" : "outline"} className="w-full justify-start" onClick={() => setPreset(k)}>{MATERIAL_PRESETS[k].label}</Button>)}</div> : <>
+        {mode !== "2d" && <div className="space-y-2"><h3 className="text-xs text-muted-foreground">Wall finish</h3>{(Object.keys(MATERIAL_PRESETS) as MaterialPreset[]).map(k => <Button key={k} variant={preset === k ? "secondary" : "outline"} className="w-full justify-start" onClick={() => setPreset(k)}>{MATERIAL_PRESETS[k].label}</Button>)}<h3 className="pt-3 text-xs text-muted-foreground">Floor finish</h3>{(Object.keys(FLOOR_PRESETS) as FloorPreset[]).map(k => <Button key={k} variant={floorPreset === k ? "secondary" : "outline"} className="w-full justify-start" onClick={() => setFloorPreset(k)}>{FLOOR_PRESETS[k].label}</Button>)}</div>} {mode !== "3d" && <>
           {selWall && <>
             <NumberField label="Length (m)" value={Math.hypot(selWall.x2-selWall.x1,selWall.y2-selWall.y1)/GRID_SIZE} min={0.25} max={36} onChange={v => { const a = Math.atan2(selWall.y2-selWall.y1,selWall.x2-selWall.x1); update(editWall(layout, selWall.id, { x2: selWall.x1+Math.cos(a)*v*GRID_SIZE, y2: selWall.y1+Math.sin(a)*v*GRID_SIZE })); }} />
             <NumberField label="Thickness (m)" value={selWall.thickness/GRID_SIZE} min={0.1} max={1} onChange={v => update(editWall(layout,selWall.id,{thickness:v*GRID_SIZE}))} />
