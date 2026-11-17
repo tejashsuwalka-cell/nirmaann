@@ -1,20 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
-import {
-  ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2,
-  MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2,
-} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, BedDouble, Box, Check, ClipboardCheck, DoorOpen, Eraser, Flower2, LayoutGrid, Loader2, MousePointer2, PencilRuler, RotateCw, Save, Sofa, SquareDashed, Tv, Trash2, Wand2, Undo2, Redo2, Hand, Minus, Plus, Scan, Magnet, Download, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { BlueprintCanvas, type Tool } from "@/components/nirmaan/BlueprintCanvas";
 import { Scene3D } from "@/components/nirmaan/Scene3D";
 import { AuditDrawer } from "@/components/nirmaan/AuditDrawer";
 import { useAuth } from "@/hooks/useAuth";
+import { useLayoutHistory } from "@/hooks/useLayoutHistory";
 import { getProject, saveProject } from "@/lib/projects";
 import { emptyLayout, type Layout } from "@/lib/layout-types";
-import { presetLayout } from "@/lib/geometry";
+import { presetLayout, GRID_SIZE } from "@/lib/geometry";
+import { editWall, openingPosition, removeItem } from "@/lib/editing";
 import { runAudit, type AuditResult } from "@/lib/audit";
 import { MATERIAL_PRESETS, type MaterialPreset } from "@/lib/scene3d";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/editor/$projectId")({
   ssr: false,
@@ -30,170 +30,155 @@ export const Route = createFileRoute("/editor/$projectId")({
 });
 
 const TOOLS: { id: Tool; label: string; icon: typeof Sofa }[] = [
-  { id: "select", label: "Select", icon: MousePointer2 },
-  { id: "wall", label: "Wall", icon: SquareDashed },
-  { id: "door", label: "Door", icon: DoorOpen },
-  { id: "window", label: "Window", icon: LayoutGrid },
+  { id: "select", label: "Select", icon: MousePointer2 }, { id: "pan", label: "Pan", icon: Hand },
+  { id: "wall", label: "Wall", icon: SquareDashed }, { id: "door", label: "Door", icon: DoorOpen },
+  { id: "window", label: "Window", icon: LayoutGrid }, { id: "sofa", label: "Sofa", icon: Sofa },
+  { id: "bed", label: "Bed", icon: BedDouble }, { id: "plant", label: "Plant", icon: Flower2 }, { id: "tv_unit", label: "TV unit", icon: Tv },
 ];
-const DECOR: { id: Tool; label: string; icon: typeof Sofa }[] = [
-  { id: "sofa", label: "Sofa", icon: Sofa },
-  { id: "bed", label: "Bed", icon: BedDouble },
-  { id: "plant", label: "Plant", icon: Flower2 },
-  { id: "tv_unit", label: "TV Unit", icon: Tv },
-];
-const HINTS: Partial<Record<Tool, string>> = {
-  select: "Click to select · drag furniture to move · R rotates · Delete removes",
-  wall: "Click to start, click again to place each corner · Esc or right-click to stop",
-  door: "Click on a wall to insert a door",
-  window: "Click on a wall to insert a window",
-};
 
 function Editor() {
   const { projectId } = Route.useParams();
   const { user, loading } = useAuth();
   const nav = useNavigate();
+  const history = useLayoutHistory();
+  const { layout } = history;
   const [name, setName] = useState("");
-  const [layout, setLayout] = useState<Layout>(emptyLayout());
   const [loaded, setLoaded] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [mode, setMode] = useState<"2d" | "3d">("2d");
   const [tool, setTool] = useState<Tool>("select");
   const [selected, setSelected] = useState<string | null>(null);
   const [preset, setPreset] = useState<MaterialPreset>("oak");
-  const [autoRotate, setAutoRotate] = useState(true);
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "dirty" | "error">("idle");
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState("");
   const [audit, setAudit] = useState<AuditResult | null>(null);
+  const userId = user?.id;
+  const [viewRevision, setViewRevision] = useState(0);
+  const [retry, setRetry] = useState(0);
+  const latest = useRef({ name, layout }); latest.current = { name, layout };
+  const dirty = loaded && JSON.stringify({ name, layout }) !== saved;
 
   useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
   useEffect(() => {
-    if (!user) return;
-    getProject(projectId).then((p) => {
-      if (!p) { setNotFound(true); return; }
-      setName(p.name);
-      setLayout({ walls: p.walls ?? [], doors: p.doors ?? [], windows: p.windows ?? [], furniture: p.furniture ?? [] });
-      setLoaded(true);
-    }).catch(() => setNotFound(true));
-  }, [user, projectId]);
+    if (!userId) return;
+    let active = true; setLoadError(null); setLoaded(false);
+    getProject(projectId).then(p => {
+      if (!active) return;
+      if (!p) { setLoadError("Project not found"); return; }
+      const value = { walls: p.walls ?? [], doors: p.doors ?? [], windows: p.windows ?? [], furniture: p.furniture ?? [] };
+      setName(p.name); history.reset(value); setSaved(JSON.stringify({ name: p.name, layout: value })); setLoaded(true);
+    }).catch(() => { if (active) setLoadError("Could not load this project"); });
+    return () => { active = false; };
+  }, [userId, projectId, retry, history.reset]);
 
-  const update = useCallback((l: Layout) => { setLayout(l); setStatus("dirty"); }, []);
-
-  const save = async () => {
-    setStatus("saving");
-    try { await saveProject(projectId, name.trim() || "Untitled Project", layout); setStatus("saved"); setTimeout(() => setStatus((s) => (s === "saved" ? "idle" : s)), 2500); }
-    catch { setStatus("error"); }
-  };
-
-  const selFurn = layout.furniture.find((f) => f.id === selected);
-  const patchFurn = (patch: { rotation?: number; scale?: number }) =>
-    update({ ...layout, furniture: layout.furniture.map((f) => (f.id === selected ? { ...f, ...patch } : f)) });
-  const deleteSelected = useCallback(() => {
-    if (!selected) return;
-    update({
-      walls: layout.walls.filter((w) => w.id !== selected),
-      doors: layout.doors.filter((d) => d.id !== selected),
-      windows: layout.windows.filter((w) => w.id !== selected),
-      furniture: layout.furniture.filter((f) => f.id !== selected),
-    });
-    setSelected(null);
-  }, [selected, layout, update]);
-
+  const update = history.update;
+  const save = useCallback(async () => {
+    if (saving) return;
+    const snapshot = latest.current; setSaving(true);
+    const cleanName = snapshot.name.trim() || "Untitled Project";
+    try {
+      await saveProject(projectId, cleanName, snapshot.layout);
+      if (latest.current.name === snapshot.name) setName(cleanName);
+      setSaved(JSON.stringify({ name: cleanName, layout: snapshot.layout })); toast.success("Project saved");
+    } catch { toast.error("Could not save. Your changes are still here; please try again."); }
+    finally { setSaving(false); }
+  }, [projectId, saving]);
+  useEffect(() => {
+    const leave = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
+    window.addEventListener("beforeunload", leave); return () => window.removeEventListener("beforeunload", leave);
+  }, [dirty]);
+  const selWall = layout.walls.find(w => w.id === selected);
+  const selFurn = layout.furniture.find(f => f.id === selected);
+  const selOpening = [...layout.doors, ...layout.windows].find(o => o.id === selected);
+  const selDoor = layout.doors.find(d => d.id === selected);
+  const selWindow = layout.windows.find(w => w.id === selected);
+  const deleteSelected = useCallback(() => { if (selected) { update(removeItem(layout, selected)); setSelected(null); } }, [selected, layout, update]);
+  const back = useCallback(() => { history.back(); setSelected(null); setTool("select"); }, [history.back]);
+  const forward = useCallback(() => { history.forward(); setSelected(null); setTool("select"); }, [history.forward]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      const target = e.target as HTMLElement;
+      if (target.closest("input,textarea,select,[contenteditable=true]")) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? forward() : back(); return; }
+      if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); forward(); return; }
+      if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); save(); return; }
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); }
-      if ((e.key === "r" || e.key === "R") && selFurn) patchFurn({ rotation: (selFurn.rotation + 45) % 360 });
+      if (e.key === "Escape") { setSelected(null); setTool("select"); }
+      if (e.key.toLowerCase() === "r" && selFurn) update({ ...layout, furniture: layout.furniture.map(f => f.id === selected ? { ...f, rotation: (f.rotation + 45) % 360 } : f) });
+      if (!mod && e.key.toLowerCase() === "v") setTool("select");
+      if (!mod && e.key.toLowerCase() === "w") setTool("wall");
+      if (!mod && e.key.toLowerCase() === "h") setTool("pan");
     };
-    window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
-  });
+    window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k);
+  }, [back, forward, save, deleteSelected, selFurn, layout, selected, update]);
+  const resizeOpening = (width: number) => {
+    if (!selOpening) return;
+    const position = openingPosition(layout, selOpening.x, selOpening.y, width, selOpening.id, selOpening.wallId);
+    if (!position) { toast.error("This opening would overlap another or exceed the wall."); return; }
+    update({ ...layout, doors: layout.doors.map(d => d.id === selected ? { ...d, ...position, width } : d), windows: layout.windows.map(w => w.id === selected ? { ...w, ...position, width } : w) });
+  };
+  const exportImage = () => {
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas[aria-label="Floor plan canvas"]');
+    if (!canvas) return;
+    const a = document.createElement("a"); a.download = `${name || "floor-plan"}.png`; a.href = canvas.toDataURL("image/png"); a.click();
+  };
+  if (loadError) return <div className="grid min-h-screen place-items-center"><div className="space-y-5 text-center"><h1 className="text-2xl">{loadError}</h1><Button onClick={() => setRetry(r => r + 1)}>Retry</Button><Button variant="outline" asChild><Link to="/dashboard">Your projects</Link></Button></div></div>;
+  if (!loaded) return <div className="grid min-h-screen place-items-center"><Loader2 className="animate-spin text-primary" aria-label="Loading project" /></div>;
 
-  if (notFound) return (
-    <div className="grid min-h-screen place-items-center bg-canvas p-4 text-center">
-      <div className="glass rounded-3xl p-8"><h1 className="text-xl font-bold">Project not found</h1><Button variant="hero" className="mt-4" asChild><Link to="/dashboard">Back to Dashboard</Link></Button></div>
+  const selectedLabel = selWall ? "Wall" : selDoor ? "Door" : selWindow ? "Window" : selFurn ? selFurn.type.replace("_", " ") : "Project";
+  return <div className="editor-shell bg-background">
+    <header className="studio-header flex flex-wrap items-center gap-2 px-3 py-3">
+      <Button variant="ghost" size="icon" aria-label="Back to Dashboard" onClick={() => { if (!dirty || confirm("Leave without saving your changes?")) nav({ to: "/dashboard" }); }}><ArrowLeft /></Button>
+      <Input aria-label="Project name" value={name} onChange={e => setName(e.target.value)} className="w-40 flex-1 border-0 bg-transparent font-medium shadow-none sm:max-w-64" />
+      <span className="text-xs text-muted-foreground">{saving ? "Saving…" : dirty ? "Unsaved" : <span className="flex items-center gap-1"><Check className="size-3 text-success" />Saved</span>}</span>
+      <div className="ml-auto flex gap-1">
+        <Button variant="ghost" size="icon" title="Undo (Ctrl/⌘ Z)" aria-label="Undo" disabled={!history.canUndo} onClick={back}><Undo2 /></Button>
+        <Button variant="ghost" size="icon" title="Redo (Ctrl/⌘ Shift Z)" aria-label="Redo" disabled={!history.canRedo} onClick={forward}><Redo2 /></Button>
+        <Button variant="outline" onClick={save} disabled={saving} aria-label="Save layout"><Save /><span className="hidden sm:inline">Save</span></Button>
+        <Button onClick={() => setAudit(runAudit(layout))}><ClipboardCheck />Audit</Button>
+      </div>
+    </header>
+    <div className="studio-header flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+      <div className="flex gap-1"><Button size="sm" variant={mode === "2d" ? "secondary" : "ghost"} aria-pressed={mode === "2d"} onClick={() => setMode("2d")}><PencilRuler />2D Blueprint</Button><Button size="sm" variant={mode === "3d" ? "secondary" : "ghost"} aria-pressed={mode === "3d"} onClick={() => setMode("3d")}><Box />3D Perspective</Button></div>
+      <div className="flex items-center gap-1">{mode === "2d" && <><Button size="icon" variant="ghost" title="Grid snapping" aria-label="Grid snapping" aria-pressed={snapEnabled} className={snapEnabled ? "text-primary" : "text-muted-foreground"} onClick={() => setSnapEnabled(s => !s)}><Magnet /></Button><Button size="icon" variant="ghost" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}><Minus /></Button><span className="w-12 text-center font-mono text-xs">{Math.round(zoom * 100)}%</span><Button size="icon" variant="ghost" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(z => Math.min(3, z + 0.25))}><Plus /></Button><Button size="icon" variant="ghost" aria-label="Reset view" title="Reset view" onClick={() => { setZoom(1); setViewRevision(v => v + 1); }}><Scan /></Button><Button size="icon" variant="ghost" aria-label="Export PNG" title="Export PNG" onClick={exportImage}><Download /></Button></>}</div>
     </div>
-  );
-  if (!loaded) return <div className="grid min-h-screen place-items-center bg-canvas"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+    <main className="editor-grid">
+      <nav className="editor-tools gap-1 p-1.5" aria-label="Drawing tools">
+        {TOOLS.map(t => <Button key={t.id} variant={tool === t.id ? "secondary" : "ghost"} disabled={mode !== "2d"} aria-label={t.label} aria-pressed={tool === t.id} title={t.label} className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px]" onClick={() => { setTool(t.id); setSelected(null); }}><t.icon />{t.label}</Button>)}
+        <Button variant="ghost" title="Load sample room" aria-label="Preset" className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px]" onClick={() => { if (!layout.walls.length || confirm("Replace this layout with the sample room? You can undo this.")) { update(presetLayout()); setSelected(null); } }}><Wand2 />Preset</Button>
+        <Button variant="ghost" title="Clear layout" aria-label="Clear" className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px] text-destructive" onClick={() => { if (confirm("Clear this layout? You can undo this.")) { update(emptyLayout()); setSelected(null); } }}><Eraser />Clear</Button>
+      </nav>
+      <section className="editor-stage relative min-w-0">
+        {mode === "2d" ? <div className="p-2 sm:p-6"><BlueprintCanvas key={viewRevision} layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / 01</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div> : <><Scene3D layout={layout} preset={preset} autoRotate={autoRotate} className="h-[70dvh] min-h-[380px] w-full" /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></>}
+      </section>
+      <aside className="studio-panel space-y-5 p-5">
+        <div className="flex items-center justify-between"><h2 className="text-lg capitalize">{selectedLabel}</h2><span className="font-mono text-[10px] text-muted-foreground">{selected ? "PROPERTIES" : "OVERVIEW"}</span></div>
+        {mode === "3d" ? <div className="space-y-2"><h3 className="text-xs text-muted-foreground">Wall finish</h3>{(Object.keys(MATERIAL_PRESETS) as MaterialPreset[]).map(k => <Button key={k} variant={preset === k ? "secondary" : "outline"} className="w-full justify-start" onClick={() => setPreset(k)}>{MATERIAL_PRESETS[k].label}</Button>)}</div> : <>
+          {selWall && <>
+            <NumberField label="Length (m)" value={Math.hypot(selWall.x2-selWall.x1,selWall.y2-selWall.y1)/GRID_SIZE} min={0.25} max={36} onChange={v => { const a = Math.atan2(selWall.y2-selWall.y1,selWall.x2-selWall.x1); update(editWall(layout, selWall.id, { x2: selWall.x1+Math.cos(a)*v*GRID_SIZE, y2: selWall.y1+Math.sin(a)*v*GRID_SIZE })); }} />
+            <NumberField label="Thickness (m)" value={selWall.thickness/GRID_SIZE} min={0.1} max={1} onChange={v => update(editWall(layout,selWall.id,{thickness:v*GRID_SIZE}))} />
+            <NumberField label="Height (m)" value={(selWall.height ?? 56)/GRID_SIZE} min={2.3} max={6} onChange={v => update(editWall(layout,selWall.id,{height:v*GRID_SIZE}))} />
+          </>}
+          {selOpening && <NumberField label="Width (m)" value={selOpening.width/GRID_SIZE} min={0.5} max={6} onChange={v => resizeOpening(v*GRID_SIZE)} />}
+          {selWindow && <><NumberField label="Window height (m)" value={(selWindow.height ?? 26)/GRID_SIZE} min={0.2} max={2} onChange={v => update({ ...layout, windows: layout.windows.map(w => w.id === selected ? { ...w, height: v*GRID_SIZE } : w) })} /><NumberField label="Sill height (m)" value={(selWindow.sillHeight ?? 18)/GRID_SIZE} min={0.1} max={1.5} onChange={v => update({ ...layout, windows: layout.windows.map(w => w.id === selected ? { ...w, sillHeight: v*GRID_SIZE } : w) })} /></>}
+          {selDoor && <Button variant="outline" className="w-full" onClick={() => update({ ...layout, doors: layout.doors.map(d => d.id === selected ? { ...d, swing: d.swing === "right" ? "left" : "right" } : d) })}><RotateCw />Flip swing</Button>}
+          {selFurn && <><NumberField label="Rotation (°)" value={selFurn.rotation} min={0} max={360} step={15} onChange={v => update({ ...layout, furniture: layout.furniture.map(f => f.id === selected ? { ...f, rotation: v } : f) })} /><NumberField label="Scale" value={selFurn.scale} min={0.5} max={4} onChange={v => update({ ...layout, furniture: layout.furniture.map(f => f.id === selected ? { ...f, scale: v } : f) })} /></>}
+          {selected && <Button variant="outline" className="w-full text-destructive" onClick={deleteSelected}><Trash2 />Delete {selectedLabel}</Button>}
+        </>}
+        <dl className="space-y-3 border-t border-border pt-5 text-sm">{[["Walls",layout.walls.length],["Doors",layout.doors.length],["Windows",layout.windows.length],["Furniture",layout.furniture.length]].map(([label,count]) => <div key={label} className="flex justify-between"><dt className="text-muted-foreground">{label}</dt><dd className="font-mono">{count}</dd></div>)}</dl>
+      </aside>
+    </main>
+    <AuditDrawer result={audit} onClose={() => setAudit(null)} />
+  </div>;
+}
 
-  const toolBtn = (t: { id: Tool; label: string; icon: typeof Sofa }) => (
-    <button key={t.id} onClick={() => setTool(t.id)} title={t.label}
-      className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold transition-all ${tool === t.id ? "bg-gradient-brand text-primary-foreground shadow-brand" : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"}`}>
-      <t.icon className="h-4 w-4" />{t.label}
-    </button>
-  );
-
-  return (
-    <div className="min-h-screen bg-canvas">
-      <header className="sticky top-0 z-30 px-3 pt-3">
-        <div className="glass flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2">
-          <Button variant="ghost" size="icon" asChild aria-label="Back to Dashboard"><Link to="/dashboard"><ArrowLeft /></Link></Button>
-          <input value={name} onChange={(e) => { setName(e.target.value); setStatus("dirty"); }}
-            className="min-w-0 flex-1 rounded-lg bg-transparent px-2 py-1 text-base font-bold text-foreground outline-none focus:bg-card sm:max-w-xs" />
-          <span className="hidden text-xs font-semibold text-muted-foreground md:inline">
-            {status === "saved" && <span className="flex items-center gap-1 text-success"><Check className="h-3.5 w-3.5" />Project saved!</span>}
-            {status === "saving" && "Saving…"}
-            {status === "dirty" && "Unsaved changes"}
-            {status === "error" && <span className="text-destructive">Save failed</span>}
-          </span>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="flex rounded-xl bg-muted p-1">
-              <button onClick={() => setMode("2d")} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${mode === "2d" ? "bg-card text-primary shadow-glass" : "text-muted-foreground"}`}><PencilRuler className="h-3.5 w-3.5" />2D Blueprint</button>
-              <button onClick={() => setMode("3d")} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${mode === "3d" ? "bg-card text-primary shadow-glass" : "text-muted-foreground"}`}><Box className="h-3.5 w-3.5" />3D Perspective</button>
-            </div>
-            <Button variant="glass" onClick={save} disabled={status === "saving"}><Save />Save Layout</Button>
-            <Button variant="hero" onClick={() => setAudit(runAudit(layout))}><ClipboardCheck />Run Audit</Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="relative mx-auto max-w-[1200px] px-3 py-4">
-        {mode === "2d" ? (
-          <div className="flex flex-col gap-3 md:flex-row">
-            <div className="glass flex shrink-0 gap-1 overflow-x-auto rounded-2xl p-2 md:w-20 md:flex-col md:self-start">
-              {TOOLS.map(toolBtn)}
-              <div className="mx-1 my-1 border-l border-border md:border-l-0 md:border-t" />
-              {DECOR.map(toolBtn)}
-              <div className="mx-1 my-1 border-l border-border md:border-l-0 md:border-t" />
-              <button onClick={() => { update(presetLayout()); setSelected(null); }} className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"><Wand2 className="h-4 w-4" />Preset</button>
-              <button onClick={() => { if (confirm("Clear the whole canvas?")) { update(emptyLayout()); setSelected(null); } }} className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Eraser className="h-4 w-4" />Clear</button>
-            </div>
-            <div className="relative min-w-0 flex-1">
-              <div className="glass rounded-3xl p-2">
-                <BlueprintCanvas layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} />
-              </div>
-              <p className="mt-2 text-center text-xs text-muted-foreground">{HINTS[tool] ?? "Click on the grid to place the item"} · 1 grid square = 1 m</p>
-              {selected && !selFurn && (
-                <div className="glass absolute bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-2xl px-4 py-2">
-                  <span className="text-xs font-bold text-foreground">Selected</span>
-                  <Button variant="destructive" size="sm" onClick={deleteSelected}><Trash2 />Delete</Button>
-                </div>
-              )}
-              {selFurn && (
-                <div className="glass absolute bottom-10 left-1/2 flex w-[min(560px,92%)] -translate-x-1/2 flex-wrap items-center gap-4 rounded-2xl px-4 py-3">
-                  <span className="text-xs font-bold uppercase tracking-wide text-primary">{selFurn.type.replace("_", " ")}</span>
-                  <label className="flex min-w-36 flex-1 items-center gap-2 text-xs font-semibold text-muted-foreground">Rotate {selFurn.rotation}°
-                    <Slider min={0} max={360} step={1} value={[selFurn.rotation]} onValueChange={([v]) => patchFurn({ rotation: v ?? 0 })} /></label>
-                  <label className="flex min-w-36 flex-1 items-center gap-2 text-xs font-semibold text-muted-foreground">Scale {selFurn.scale.toFixed(1)}x
-                    <Slider min={0.5} max={2.5} step={0.1} value={[selFurn.scale]} onValueChange={([v]) => patchFurn({ scale: v ?? 1 })} /></label>
-                  <Button variant="secondary" size="sm" onClick={() => patchFurn({ rotation: (selFurn.rotation + 45) % 360 })}><RotateCw />+45°</Button>
-                  <Button variant="destructive" size="sm" onClick={deleteSelected}><Trash2 />Delete</Button>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="glass relative overflow-hidden rounded-3xl">
-            <Scene3D layout={layout} preset={preset} autoRotate={autoRotate} className="h-[calc(100vh-7.5rem)] min-h-[420px] w-full" />
-            <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-              {(Object.keys(MATERIAL_PRESETS) as MaterialPreset[]).map((k) => (
-                <button key={k} onClick={() => setPreset(k)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${preset === k ? "bg-gradient-brand text-primary-foreground shadow-brand" : "glass text-muted-foreground hover:text-foreground"}`}>{MATERIAL_PRESETS[k].label}</button>
-              ))}
-            </div>
-            <button onClick={() => setAutoRotate((a) => !a)} className="glass absolute right-3 top-3 rounded-full px-3 py-1.5 text-xs font-bold text-foreground">{autoRotate ? "🔄 Orbiting" : "⏸️ Paused"}</button>
-            <p className="glass absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xs text-muted-foreground">Drag to orbit · scroll to zoom</p>
-          </div>
-        )}
-      </main>
-      <AuditDrawer result={audit} onClose={() => setAudit(null)} />
-    </div>
-  );
+function NumberField({ label, value, min, max, step = 0.1, onChange }: { label: string; value: number; min: number; max: number; step?: number; onChange: (value: number) => void }) {
+  const [draft, setDraft] = useState(value.toFixed(2));
+  useEffect(() => setDraft(value.toFixed(2)), [value]);
+  const apply = () => { const n = Number(draft); if (draft.trim() && Number.isFinite(n)) onChange(Math.max(min, Math.min(max,n))); else setDraft(value.toFixed(2)); };
+  return <label className="block space-y-2 text-xs text-muted-foreground"><span>{label}</span><Input aria-label={label} className="font-mono text-foreground" type="number" min={min} max={max} step={step} value={draft} onChange={e => setDraft(e.target.value)} onBlur={apply} onKeyDown={e => { if(e.key === "Enter") e.currentTarget.blur(); }} /></label>;
 }

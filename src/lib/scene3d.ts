@@ -119,21 +119,23 @@ function buildDoor(door: Door, T: number) {
   }
   return g;
 }
-function buildWindow(win: WindowItem, T: number) {
+function buildWindow(win: WindowItem, T: number, wallHeight = WALL_H) {
   const g = new THREE.Group();
-  const w = win.width, h = WIN_TOP - SILL_H;
+  const sill = Math.min(win.sillHeight ?? SILL_H, wallHeight - 6);
+  const top = Math.min(sill + (win.height ?? WIN_TOP - SILL_H), wallHeight - 2);
+  const w = win.width, h = Math.max(2, top - sill);
   const stone = std("#d6d3d1", 0.85), frame = std("#1f2937", 0.4, 0.3);
   const glass = new THREE.MeshPhysicalMaterial({ color: "#dbeafe", transmission: 0.85, ior: 1.5, roughness: 0.05, metalness: 0, thickness: 1, transparent: true, opacity: 0.5 });
-  g.add(box(w + 6, 2, T + 6, stone, 0, SILL_H - 1, 0));
-  g.add(box(w, 1.6, T, frame, 0, WIN_TOP - 0.8, 0));
-  g.add(box(w, 1.2, T, frame, 0, SILL_H + 0.6, 0));
-  g.add(box(1.6, h, T, frame, -w / 2 + 0.8, SILL_H + h / 2, 0));
-  g.add(box(1.6, h, T, frame, w / 2 - 0.8, SILL_H + h / 2, 0));
+  g.add(box(w + 6, 2, T + 6, stone, 0, sill - 1, 0));
+  g.add(box(w, 1.6, T, frame, 0, top - 0.8, 0));
+  g.add(box(w, 1.2, T, frame, 0, sill + 0.6, 0));
+  g.add(box(1.6, h, T, frame, -w / 2 + 0.8, sill + h / 2, 0));
+  g.add(box(1.6, h, T, frame, w / 2 - 0.8, sill + h / 2, 0));
   const pane = new THREE.Mesh(new THREE.BoxGeometry(w - 3, h - 2.6, 0.6), glass);
-  pane.position.set(0, SILL_H + h / 2, 0);
+  pane.position.set(0, sill + h / 2, 0);
   g.add(pane);
-  g.add(box(0.8, h - 2, 1.2, frame, 0, SILL_H + h / 2, 0));
-  g.add(box(w - 2, 0.8, 1.2, frame, 0, SILL_H + h / 2, 0));
+  g.add(box(0.8, h - 2, 1.2, frame, 0, sill + h / 2, 0));
+  g.add(box(w - 2, 0.8, 1.2, frame, 0, sill + h / 2, 0));
   return g;
 }
 
@@ -142,12 +144,13 @@ function floorTexture() {
   if (floorTex) return floorTex;
   const c = document.createElement("canvas");
   c.width = c.height = 512;
-  const x = c.getContext("2d")!;
+  const x = c.getContext("2d");
+  if (!x) return new THREE.CanvasTexture(c);
   const tones = ["#e7d3b5", "#e0c9a6", "#ead9bf", "#dcc39d", "#e4cfae"];
   for (let r = 0; r < 8; r++) {
     let off = (r % 2) * 120;
     for (let i = -1; i < 4; i++) {
-      x.fillStyle = tones[(r * 3 + i + 5) % tones.length]!;
+      x.fillStyle = tones[(r * 3 + i + 5) % tones.length] ?? tones[0] ?? "";
       x.fillRect(off + i * 200, r * 64, 198, 62);
       x.fillStyle = "rgba(120,80,40,0.06)";
       for (let k = 0; k < 6; k++) x.fillRect(off + i * 200, r * 64 + 6 + k * 9, 198, 1);
@@ -180,17 +183,19 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
   root.add(floor);
 
   // Openings per wall
-  type Op = { along: number; hw: number; kind: "door" | "window" };
+  type Op = { along: number; hw: number; kind: "door" | "window"; sill: number; top: number };
   const ops = new Map<string, Op[]>();
   const place = (item: Door | WindowItem, kind: "door" | "window") => {
     const s = nearestWall(item.x, item.y, layout.walls, item.wallId);
     const T = s?.wall.thickness ?? 14;
-    const grp = kind === "door" ? buildDoor(item as Door, T) : buildWindow(item as WindowItem, T);
+    const grp = kind === "door" ? buildDoor(item as Door, T) : buildWindow(item as WindowItem, T, s?.wall.height ?? WALL_H);
     if (s && s.dist < 40) {
       grp.position.set(s.projX - OFFSET_X, 0, s.projY - OFFSET_Z);
       grp.rotation.y = -s.angle;
       const list = ops.get(s.wall.id) ?? [];
-      list.push({ along: s.along, hw: item.width / 2 + (kind === "door" ? 2 : 0), kind });
+      const win = item as WindowItem;
+      const sill = Math.min(win.sillHeight ?? SILL_H, (s.wall.height ?? WALL_H) - 6);
+      list.push({ along: s.along, hw: item.width / 2 + (kind === "door" ? 2 : 0), kind, sill, top: Math.min(sill + (win.height ?? WIN_TOP - SILL_H), (s.wall.height ?? WALL_H) - 2) });
       ops.set(s.wall.id, list);
     } else {
       grp.position.set(item.x - OFFSET_X, 0, item.y - OFFSET_Z);
@@ -203,7 +208,7 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
   for (const w of layout.walls) {
     const dx = w.x2 - w.x1, dy = w.y2 - w.y1, len = Math.hypot(dx, dy);
     if (len < 1) continue;
-    const ux = dx / len, uy = dy / len, angle = Math.atan2(dy, dx), T = w.thickness;
+    const ux = dx / len, uy = dy / len, angle = Math.atan2(dy, dx), T = w.thickness, height = w.height ?? WALL_H;
     const seg = (s0: number, s1: number, y0: number, y1: number, extra = 0) => {
       if (s1 - s0 < 0.5 || y1 - y0 < 0.5) return;
       const mid = (s0 + s1) / 2;
@@ -216,12 +221,12 @@ export function buildLayoutGroup(layout: Layout, preset: MaterialPreset) {
     for (const o of list) {
       const a = Math.max(cur, o.along - o.hw), b = Math.min(len, o.along + o.hw);
       if (b <= a) continue;
-      seg(cur, a, 0, WALL_H, cur === 0 ? T : 0);
-      if (o.kind === "door") seg(a, b, DOOR_H + 2, WALL_H);
-      else { seg(a, b, 0, SILL_H - 2); seg(a, b, WIN_TOP, WALL_H); }
+      seg(cur, a, 0, height, cur === 0 ? T : 0);
+      if (o.kind === "door") seg(a, b, DOOR_H + 2, height);
+      else { seg(a, b, 0, o.sill - 2); seg(a, b, o.top, height); }
       cur = b;
     }
-    seg(cur, len, 0, WALL_H, cur === 0 ? T : 0);
+    seg(cur, len, 0, height, cur === 0 ? T : 0);
   }
 
   for (const f of layout.furniture) {
@@ -240,7 +245,7 @@ function disposeTree(o: THREE.Object3D) {
     if (m.geometry) m.geometry.dispose();
     const mat = m.material as THREE.Material | THREE.Material[] | undefined;
     if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
-    else if (mat && (mat as THREE.MeshStandardMaterial).map !== floorTex) mat.dispose();
+    else if (mat) mat.dispose();
   });
 }
 
@@ -255,7 +260,7 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -267,7 +272,10 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
 
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const environment = new RoomEnvironment();
+  const environmentTarget = pmrem.fromScene(environment, 0.04);
+  scene.environment = environmentTarget.texture;
+  environment.dispose();
   scene.environmentIntensity = 0.55;
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.35));
@@ -293,7 +301,8 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
   camera.position.set(14, 12, 14);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.autoRotate = !!opts.autoRotate;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  controls.autoRotate = !!opts.autoRotate && !reducedMotion;
   controls.autoRotateSpeed = 1.1;
   controls.maxPolarAngle = Math.PI / 2.1;
   controls.enableZoom = opts.enableZoom ?? true;
@@ -334,19 +343,24 @@ export function createViewer(container: HTMLElement, opts: { autoRotate?: boolea
       pivot.add(root);
       if (refit) {
         controls.target.copy(center);
-        const d = Math.max(radius, 4) * 2.4;
+        const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+        const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
+        const d = Math.max(radius, 2) / Math.sin(Math.min(verticalFov, horizontalFov) / 2) * 1.2;
+        controls.maxDistance = Math.max(60, d * 2);
         camera.position.set(center.x + d * 0.75, d * 0.7, center.z + d * 0.85);
         sun.target.position.copy(center);
         sun.target.updateMatrixWorld();
       }
     },
-    setAutoRotate(on) { controls.autoRotate = on; },
+    setAutoRotate(on) { controls.autoRotate = on && !reducedMotion; },
     setParallax(x, y) { parallax.x = x; parallax.y = y; },
     dispose() {
       cancelAnimationFrame(raf);
       ro.disconnect();
       controls.dispose();
       if (content) disposeTree(content);
+      environmentTarget.dispose();
+      disposeTree(ground);
       pmrem.dispose();
       renderer.dispose();
       renderer.domElement.remove();

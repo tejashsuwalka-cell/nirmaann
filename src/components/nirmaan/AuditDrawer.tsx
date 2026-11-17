@@ -1,15 +1,16 @@
-import { AlertTriangle, CheckCircle2, Lightbulb, Sparkles, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Lightbulb, Sparkles } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { AuditResult } from "@/lib/audit";
 
 export function AuditDrawer({ result, onClose }: { result: AuditResult | null; onClose: () => void }) {
   const open = !!result;
   return (
-    <aside className={`glass fixed bottom-3 right-3 top-3 z-40 flex w-[min(380px,calc(100vw-1.5rem))] flex-col rounded-3xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-[110%]"}`}>
+    <Sheet open={open} onOpenChange={value => { if (!value) onClose(); }}><SheetContent className="flex w-[min(420px,100vw)] flex-col gap-0 overflow-hidden p-0" aria-describedby={undefined}>
       {result && (
         <>
-          <div className="flex items-center justify-between border-b border-border/60 p-5">
-            <h2 className="text-lg font-extrabold text-foreground">Compliance & Vastu Audit</h2>
-            <button onClick={onClose} aria-label="Close audit" className="rounded-lg p-1 text-muted-foreground hover:bg-muted"><X className="h-5 w-5" /></button>
+          <div className="flex items-center justify-between border-b border-border/60 p-5 pr-12">
+            <SheetTitle className="text-lg font-medium text-foreground">Compliance & Vastu Audit</SheetTitle>
+
           </div>
           <div className="flex-1 space-y-5 overflow-y-auto p-5">
             <div>
@@ -35,7 +36,7 @@ export function AuditDrawer({ result, onClose }: { result: AuditResult | null; o
           </div>
         </>
       )}
-    </aside>
+    </SheetContent></Sheet>
   );
 }
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
