@@ -35,9 +35,9 @@ function Index() {
     const image = imageRef.current;
     if (!image) return;
     const observer = new IntersectionObserver(([entry]) => {
-      image.dataset.visible = String(!!entry?.isIntersecting && !document.hidden);
+      image.dataset["visible"] = String(!!entry?.isIntersecting && !document.hidden);
     });
-    const visibility = () => { image.dataset.visible = String(!document.hidden && image.getBoundingClientRect().bottom > 0); };
+    const visibility = () => { image.dataset["visible"] = String(!document.hidden && image.getBoundingClientRect().bottom > 0); };
     observer.observe(image);
     document.addEventListener("visibilitychange", visibility);
     return () => { observer.disconnect(); document.removeEventListener("visibilitychange", visibility); };

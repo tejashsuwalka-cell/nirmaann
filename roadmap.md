@@ -6,7 +6,8 @@
 - [x] Run rule tests and desktop/mobile workflow checks.
 
 # Current refinements
-- [ ] Finish Lovable sign-in checks on both account pages.
+- [x] Enable Lovable authentication and verify initiation.
+- [ ] Add Google sign-in and remove the Lovable button from both account pages.
 - [ ] Remove the version suffix from all NIRMAAN branding.
 - [ ] Fix page and workspace scrolling and reduce background animation lag across window sizes.
 - [ ] Verify phone and desktop scrolling, navigation and account pages.
