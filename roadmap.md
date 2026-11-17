@@ -14,7 +14,7 @@
 - [x] Explain where to enable Google login in the account settings.
 
 # Split view and first campaign
-- [ ] Add simultaneous 2D/3D split view with mobile stacking.
-- [ ] Fix window geometry/rendering and add floor and wall finishes.
-- [ ] Verify the signed-in editor on desktop and mobile.
+- [x] Add simultaneous 2D/3D split view with mobile stacking.
+- [x] Fix window geometry/rendering and add floor and wall finishes.
+- [x] Verify the signed-in editor on desktop and mobile.
 - [ ] Plan the first campaign (waiting on goal, audience, market and budget).
