@@ -83,9 +83,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "NIRMAAN 2.0 — Blueprint to 3D Architecture" },
+      { title: "NIRMAAN — Blueprint to 3D Architecture" },
       { name: "description", content: "Draft 2D blueprints, visualise them in 3D and run compliance audits in your browser." },
-      { property: "og:title", content: "NIRMAAN 2.0 — Blueprint to 3D Architecture" },
+      { property: "og:title", content: "NIRMAAN — Blueprint to 3D Architecture" },
       { property: "og:description", content: "Draft 2D blueprints, visualise them in 3D and run compliance audits in your browser." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

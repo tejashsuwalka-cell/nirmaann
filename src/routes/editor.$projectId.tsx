@@ -19,9 +19,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/editor/$projectId")({
   ssr: false,
   head: () => ({ meta: [
-    { title: "Blueprint Editor — NIRMAAN 2.0" },
+    { title: "Blueprint Editor — NIRMAAN" },
     { name: "description", content: "Draft your floor plan in 2D and explore it in 3D." },
-    { property: "og:title", content: "Blueprint Editor — NIRMAAN 2.0" },
+    { property: "og:title", content: "Blueprint Editor — NIRMAAN" },
     { property: "og:description", content: "Draft your floor plan in 2D and explore it in 3D." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },

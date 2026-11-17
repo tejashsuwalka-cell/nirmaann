@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
         content:
           "Draft 2D floor plans, see them instantly in 3D and run automated compliance and Vastu audits — all in your browser.",
       },
-      { property: "og:title", content: "NIRMAAN 2.0 — Architectural Precision in 3D" },
+      { property: "og:title", content: "NIRMAAN — Architectural Precision in 3D" },
       {
         property: "og:description",
         content: "Blueprint drafting, real-time 3D visualisation and compliance audits in one studio.",
@@ -59,6 +59,6 @@ function Index() {
         <div className="grid sm:grid-cols-3">{[["01", "The plan", "Precise walls, openings and furniture."],["02", "The perspective", "A live three-dimensional view of your design."],["03", "The review", "An indicative check of access, light and layout."]].map(([n,title,description]) => <article key={n} className="border-b border-border py-7 sm:pr-8"><span className="font-mono text-xs text-primary">{n}</span><h3 className="mt-4 text-xl">{title}</h3><p className="mt-2 text-sm text-muted-foreground">{description}</p></article>)}</div>
       </section>
     </main>
-    <footer className="flex flex-wrap justify-between gap-3 border-t border-border px-6 py-6 text-xs text-muted-foreground sm:px-10"><span>© {new Date().getFullYear()} NIRMAAN 2.0</span><span>Architecture begins with an idea.</span></footer>
+    <footer className="flex flex-wrap justify-between gap-3 border-t border-border px-6 py-6 text-xs text-muted-foreground sm:px-10"><span>© {new Date().getFullYear()} NIRMAAN</span><span>Architecture begins with an idea.</span></footer>
   </div>;
 }

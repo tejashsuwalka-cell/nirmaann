@@ -9,10 +9,10 @@ import { ALIVE_KEY, REMEMBER_KEY, useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [
-    { title: "Sign In — NIRMAAN 2.0" },
-    { name: "description", content: "Sign in to your NIRMAAN 2.0 architecture studio." },
-    { property: "og:title", content: "Sign In — NIRMAAN 2.0" },
-    { property: "og:description", content: "Sign in to your NIRMAAN 2.0 architecture studio." },
+    { title: "Sign In — NIRMAAN" },
+    { name: "description", content: "Sign in to your NIRMAAN architecture studio." },
+    { property: "og:title", content: "Sign In — NIRMAAN" },
+    { property: "og:description", content: "Sign in to your NIRMAAN architecture studio." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
