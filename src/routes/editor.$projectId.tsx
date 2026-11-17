@@ -55,13 +55,15 @@ function Editor() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState("");
   const [audit, setAudit] = useState<AuditResult | null>(null);
+  const userId = user?.id;
+  const [viewRevision, setViewRevision] = useState(0);
   const [retry, setRetry] = useState(0);
   const latest = useRef({ name, layout }); latest.current = { name, layout };
   const dirty = loaded && JSON.stringify({ name, layout }) !== saved;
 
   useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     let active = true; setLoadError(null); setLoaded(false);
     getProject(projectId).then(p => {
       if (!active) return;
@@ -70,7 +72,7 @@ function Editor() {
       setName(p.name); history.reset(value); setSaved(JSON.stringify({ name: p.name, layout: value })); setLoaded(true);
     }).catch(() => { if (active) setLoadError("Could not load this project"); });
     return () => { active = false; };
-  }, [user, projectId, retry, history.reset]);
+  }, [userId, projectId, retry, history.reset]);
 
   const update = history.update;
   const save = useCallback(async () => {
@@ -142,7 +144,7 @@ function Editor() {
     </header>
     <div className="studio-header flex flex-wrap items-center justify-between gap-2 px-4 py-2">
       <div className="flex gap-1"><Button size="sm" variant={mode === "2d" ? "secondary" : "ghost"} aria-pressed={mode === "2d"} onClick={() => setMode("2d")}><PencilRuler />2D Blueprint</Button><Button size="sm" variant={mode === "3d" ? "secondary" : "ghost"} aria-pressed={mode === "3d"} onClick={() => setMode("3d")}><Box />3D Perspective</Button></div>
-      <div className="flex items-center gap-1">{mode === "2d" && <><Button size="icon" variant="ghost" title="Grid snapping" aria-label="Grid snapping" aria-pressed={snapEnabled} className={snapEnabled ? "text-primary" : "text-muted-foreground"} onClick={() => setSnapEnabled(s => !s)}><Magnet /></Button><Button size="icon" variant="ghost" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}><Minus /></Button><span className="w-12 text-center font-mono text-xs">{Math.round(zoom * 100)}%</span><Button size="icon" variant="ghost" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(z => Math.min(3, z + 0.25))}><Plus /></Button><Button size="icon" variant="ghost" aria-label="Reset view" title="Reset view" onClick={() => setZoom(1)}><Scan /></Button><Button size="icon" variant="ghost" aria-label="Export PNG" title="Export PNG" onClick={exportImage}><Download /></Button></>}</div>
+      <div className="flex items-center gap-1">{mode === "2d" && <><Button size="icon" variant="ghost" title="Grid snapping" aria-label="Grid snapping" aria-pressed={snapEnabled} className={snapEnabled ? "text-primary" : "text-muted-foreground"} onClick={() => setSnapEnabled(s => !s)}><Magnet /></Button><Button size="icon" variant="ghost" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}><Minus /></Button><span className="w-12 text-center font-mono text-xs">{Math.round(zoom * 100)}%</span><Button size="icon" variant="ghost" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom(z => Math.min(3, z + 0.25))}><Plus /></Button><Button size="icon" variant="ghost" aria-label="Reset view" title="Reset view" onClick={() => { setZoom(1); setViewRevision(v => v + 1); }}><Scan /></Button><Button size="icon" variant="ghost" aria-label="Export PNG" title="Export PNG" onClick={exportImage}><Download /></Button></>}</div>
     </div>
     <main className="editor-grid">
       <nav className="editor-tools gap-1 p-1.5" aria-label="Drawing tools">
@@ -151,7 +153,7 @@ function Editor() {
         <Button variant="ghost" title="Clear layout" aria-label="Clear" className="h-14 w-12 shrink-0 flex-col gap-1 px-0 text-[10px] text-destructive" onClick={() => { if (confirm("Clear this layout? You can undo this.")) { update(emptyLayout()); setSelected(null); } }}><Eraser />Clear</Button>
       </nav>
       <section className="editor-stage relative min-w-0">
-        {mode === "2d" ? <div className="p-2 sm:p-6"><BlueprintCanvas layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / 01</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div> : <><Scene3D layout={layout} preset={preset} autoRotate={autoRotate} className="h-[70dvh] min-h-[380px] w-full" /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></>}
+        {mode === "2d" ? <div className="p-2 sm:p-6"><BlueprintCanvas key={viewRevision} layout={layout} onChange={update} tool={tool} selectedId={selected} onSelect={setSelected} zoom={zoom} onZoom={setZoom} snapEnabled={snapEnabled} onNotice={toast.error} /><div className="mt-3 flex justify-between border-t border-border pt-3 font-mono text-[10px] text-muted-foreground"><span>PLAN / 01</span><span>1 GRID = 1 m</span><span>N ↑</span></div></div> : <><Scene3D layout={layout} preset={preset} autoRotate={autoRotate} className="h-[70dvh] min-h-[380px] w-full" /><Button className="absolute bottom-4 right-4" variant="outline" onClick={() => setAutoRotate(a => !a)} aria-label={autoRotate ? "Pause orbit" : "Start orbit"}>{autoRotate ? <Pause /> : <Play />}{autoRotate ? "Pause" : "Orbit"}</Button></>}
       </section>
       <aside className="studio-panel space-y-5 p-5">
         <div className="flex items-center justify-between"><h2 className="text-lg capitalize">{selectedLabel}</h2><span className="font-mono text-[10px] text-muted-foreground">{selected ? "PROPERTIES" : "OVERVIEW"}</span></div>
