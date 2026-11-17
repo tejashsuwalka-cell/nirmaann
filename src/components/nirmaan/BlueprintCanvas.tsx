@@ -22,7 +22,7 @@ interface Props {
 }
 
 // Canvas drawing colours (blueprint palette from the spec)
-const C = { bg: "", grid: "", gridMajor: "", wall: "", sel: "", preview: "", door: "", swing: "", glass: "", ink: "" };
+const C = { bg: "", grid: "", gridMajor: "", wall: "", sel: "", preview: "", door: "", swing: "", glass: "", ink: "", fabric: "", cushion: "", bed: "", wood: "", leaf: "", leafDark: "", pot: "" };
 
 function drawFurniture(ctx: CanvasRenderingContext2D, f: FurnitureItem, selected: boolean) {
   const { w, d } = FURNITURE_SIZE[f.type];
@@ -35,23 +35,23 @@ function drawFurniture(ctx: CanvasRenderingContext2D, f: FurnitureItem, selected
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
   };
   if (f.type === "sofa") {
-    rr(-w / 2, -d / 2, w, d, 4, "#6366f1", "#3730a3");
-    rr(-w / 2, -d / 2, w, 5, 2, "#4338ca");
-    rr(-w / 2, -d / 2, 5, d, 2, "#4338ca"); rr(w / 2 - 5, -d / 2, 5, d, 2, "#4338ca");
+    rr(-w / 2, -d / 2, w, d, 4, C.fabric, C.ink);
+    rr(-w / 2, -d / 2, w, 5, 2, C.fabric);
+    rr(-w / 2, -d / 2, 5, d, 2, C.fabric); rr(w / 2 - 5, -d / 2, 5, d, 2, C.fabric);
     const cw = (w - 10) / 3;
-    for (let i = 0; i < 3; i++) rr(-w / 2 + 5 + i * cw + 0.5, -d / 2 + 5.5, cw - 1, d - 7, 2, "#818cf8");
+    for (let i = 0; i < 3; i++) rr(-w / 2 + 5 + i * cw + 0.5, -d / 2 + 5.5, cw - 1, d - 7, 2, C.cushion);
   } else if (f.type === "bed") {
-    rr(-w / 2, -d / 2, w, d, 3, "#64748b", "#334155");
-    rr(-w / 2, -d / 2, w, 4, 1, "#334155");
-    rr(-w / 2 + 3, -d / 2 + 6, w / 2 - 5, 7, 2, "#f8fafc"); rr(2, -d / 2 + 6, w / 2 - 5, 7, 2, "#f8fafc");
-    rr(-w / 2 + 1.5, -d / 2 + 16, w - 3, d - 18, 2, "#94a3b8");
+    rr(-w / 2, -d / 2, w, d, 3, C.bed, C.ink);
+    rr(-w / 2, -d / 2, w, 4, 1, C.ink);
+    rr(-w / 2 + 3, -d / 2 + 6, w / 2 - 5, 7, 2, C.bg); rr(2, -d / 2 + 6, w / 2 - 5, 7, 2, C.bg);
+    rr(-w / 2 + 1.5, -d / 2 + 16, w - 3, d - 18, 2, C.bed);
   } else if (f.type === "plant") {
-    ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.fillStyle = "#22c55e"; ctx.fill();
-    ctx.lineWidth = 2.5; ctx.strokeStyle = "#c2410c"; ctx.stroke();
-    ctx.beginPath(); ctx.arc(-1.5, -1.5, 2.5, 0, Math.PI * 2); ctx.fillStyle = "#15803d"; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.fillStyle = C.leaf; ctx.fill();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = C.pot; ctx.stroke();
+    ctx.beginPath(); ctx.arc(-1.5, -1.5, 2.5, 0, Math.PI * 2); ctx.fillStyle = C.leafDark; ctx.fill();
   } else {
-    rr(-w / 2, -d / 2, w, d, 2, "#78350f", "#451a03");
-    rr(-w / 2 + 3, -d / 2 + 1, w - 6, 3, 1, "#0f172a");
+    rr(-w / 2, -d / 2, w, d, 2, C.wood, C.ink);
+    rr(-w / 2 + 3, -d / 2 + 1, w - 6, 3, 1, C.ink);
   }
   if (selected) {
     ctx.setLineDash([4, 3]); ctx.strokeStyle = C.sel; ctx.lineWidth = 1.5;
@@ -71,9 +71,9 @@ function hitFurniture(f: FurnitureItem, x: number, y: number) {
 function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color = C.ink) {
   ctx.font = "500 11px 'IBM Plex Sans', sans-serif";
   const m = ctx.measureText(text).width;
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.fillStyle = C.bg;
   ctx.beginPath(); ctx.roundRect(x - m / 2 - 5, y - 9, m + 10, 18, 6); ctx.fill();
-  ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = C.gridMajor; ctx.lineWidth = 1; ctx.stroke();
   ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x, y + 0.5);
 }
 
@@ -98,7 +98,7 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
     const cv = ref.current;
     if (!cv) return;
     const css = getComputedStyle(cv);
-    for (const [key, token] of Object.entries({ bg: "--plan-background", grid: "--plan-grid", gridMajor: "--plan-grid-major", wall: "--foreground", sel: "--primary", preview: "--primary", door: "--primary", swing: "--muted-foreground", glass: "--sky", ink: "--foreground" })) C[key as keyof typeof C] = css.getPropertyValue(token).trim();
+    for (const [key, token] of Object.entries({ bg: "--plan-background", grid: "--plan-grid", gridMajor: "--plan-grid-major", wall: "--foreground", sel: "--primary", preview: "--primary", door: "--primary", swing: "--muted-foreground", glass: "--sky", ink: "--foreground", fabric: "--plan-fabric", cushion: "--plan-cushion", bed: "--plan-bed", wood: "--plan-wood", leaf: "--success", leafDark: "--primary", pot: "--plan-pot" })) C[key as keyof typeof C] = css.getPropertyValue(token).trim();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = CANVAS_W * dpr; cv.height = CANVAS_H * dpr;
     const ctx = cv.getContext("2d");
@@ -127,10 +127,10 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
     for (const win of layout.windows) {
       const s = nearestWall(win.x, win.y, layout.walls, win.wallId);
       ctx.save(); ctx.translate(win.x, win.y); ctx.rotate(s && s.dist < 40 ? s.angle : 0);
-      ctx.fillStyle = C.bg; ctx.fillRect(-win.width / 2, -9, win.width, 18);
+      ctx.fillStyle = C.bg; ctx.fillRect(-win.width / 2, -(s?.wall.thickness ?? 14) / 2 - 1, win.width, (s?.wall.thickness ?? 14) + 2);
       ctx.fillStyle = C.glass; ctx.strokeStyle = win.id === selectedId ? C.sel : C.ink; ctx.lineWidth = win.id === selectedId ? 2.5 : 1.5;
       ctx.fillRect(-win.width / 2, -5, win.width, 10); ctx.strokeRect(-win.width / 2, -5, win.width, 10);
-      ctx.beginPath(); ctx.moveTo(-win.width / 2, 0); ctx.lineTo(win.width / 2, 0); ctx.strokeStyle = "#e0f2fe"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-win.width / 2, 0); ctx.lineTo(win.width / 2, 0); ctx.strokeStyle = C.bg; ctx.lineWidth = 1; ctx.stroke();
       ctx.rotate(-(s && s.dist < 40 ? s.angle : 0));
       ctx.fillStyle = C.ink; ctx.font = "700 9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("W", 0, -14);
       ctx.restore();
@@ -139,7 +139,7 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
       const s = nearestWall(d.x, d.y, layout.walls, d.wallId);
       const ang = s && s.dist < 40 ? s.angle : 0;
       ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(ang);
-      ctx.fillStyle = C.bg; ctx.fillRect(-d.width / 2, -9, d.width, 18);
+      ctx.fillStyle = C.bg; ctx.fillRect(-d.width / 2, -(s?.wall.thickness ?? 14) / 2 - 1, d.width, (s?.wall.thickness ?? 14) + 2);
       if (d.swing === "right") ctx.scale(-1, 1);
       ctx.strokeStyle = C.swing; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
       ctx.beginPath(); ctx.moveTo(-d.width / 2, 0); ctx.arc(-d.width / 2, 0, d.width, 0, -Math.PI / 2, true); ctx.stroke(); ctx.setLineDash([]);
@@ -147,7 +147,7 @@ export function BlueprintCanvas({ layout: savedLayout, onChange, tool, selectedI
       ctx.restore();
       ctx.beginPath(); ctx.arc(d.x, d.y, 9, 0, Math.PI * 2); ctx.fillStyle = C.door; ctx.fill();
       if (d.id === selectedId) { ctx.strokeStyle = C.sel; ctx.lineWidth = 3; ctx.stroke(); }
-      ctx.fillStyle = "#ffffff"; ctx.font = "700 10px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("D", d.x, d.y + 0.5);
+      ctx.fillStyle = C.bg; ctx.font = "700 10px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("D", d.x, d.y + 0.5);
     }
     for (const f of layout.furniture) drawFurniture(ctx, f, f.id === selectedId);
 

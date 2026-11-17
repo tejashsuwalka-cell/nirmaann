@@ -111,6 +111,11 @@
   --glass-bg: oklch(1 0 0 / 0.75);
   --glass-border: oklch(1 0 0 / 0.85);
   --gradient-brand: linear-gradient(var(--primary), var(--primary));
+  --plan-fabric: oklch(0.5 0.03 165);
+  --plan-cushion: oklch(0.68 0.04 165);
+  --plan-bed: oklch(0.65 0.015 240);
+  --plan-wood: oklch(0.5 0.07 70);
+  --plan-pot: oklch(0.6 0.12 45);
   --plan-background: oklch(1 0 0);
   --plan-grid: oklch(0.96 0.002 160);
   --plan-grid-major: oklch(0.9 0.004 160);
