@@ -32,6 +32,6 @@ dist-ssr
 *.sw?
 
 # Environment Variables
-.env
+# .env holds only public (publishable) Cloud values and must stay committed: the published build reads it.
 .env.*
 !.env.example
