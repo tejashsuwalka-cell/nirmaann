@@ -179,15 +179,15 @@ function Editor() {
   };
   const onUpload = async (file: File | undefined) => {
     if (!file) return;
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error("Please upload a PNG, JPG or WebP image of your plan."); return; }
-    if (file.size > 6_000_000) { toast.error("Please use an image under 6 MB."); return; }
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error("Only a house blueprint image works here — please upload a PNG, JPG or WebP of your floor plan."); return; }
+    if (file.size > 4_000_000) { toast.error("Please use a blueprint image under 4 MB."); return; }
     setScanning(true);
     try {
       const image = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error("Could not open this image. Please try again.")); r.readAsDataURL(file); });
       const { plan, error } = await scan({ data: { image } });
       if (error || !plan) { toast.error(error ?? "Could not read this blueprint."); return; }
       const next = planToLayout(plan);
-      if (!next.walls.length) { toast.error("No walls were found. Try a clearer, straight-on image of a floor plan."); return; }
+       if (!next.walls.length) { toast.error("This doesn't look like a house blueprint — please upload a clear floor plan image."); return; }
       if (layout.walls.length && !confirm("Replace this floor with the scanned plan? You can undo this.")) return;
       update({ ...next, furniture: [] }); setSelected(null); setMode(m => m === "3d" ? "split" : m);
       toast.success(`Drew ${next.walls.length} walls, ${next.doors.length} doors and ${next.windows.length} windows — check the lengths`);

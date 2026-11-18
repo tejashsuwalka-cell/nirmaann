@@ -23,8 +23,8 @@ Ignore furniture, text, hatching and dimension lines. If the image is not a floo
 export const scanBlueprint = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { image: string }) => {
-    if (typeof input?.image !== "string" || !/^data:image\/(png|jpe?g|webp);base64,/.test(input.image)) throw new Error("Upload a PNG, JPG or WebP image.");
-    if (input.image.length > 8_000_000) throw new Error("Image is too large; please use one under 6 MB.");
+    if (typeof input?.image !== "string" || !/^data:image\/(png|jpe?g|webp);base64,/.test(input.image)) throw new Error("Only a house blueprint image works here — upload a PNG, JPG or WebP of a floor plan.");
+    if (input.image.length > 5_500_000) throw new Error("Please use a blueprint image under 4 MB.");
     return input;
   })
   .handler(async ({ data }): Promise<{ plan: ScannedPlan | null; error: string | null }> => {
@@ -45,6 +45,7 @@ export const scanBlueprint = createServerFn({ method: "POST" })
         providerOptions: { openai: { store: false, forceReasoning: true, reasoningEffort: "medium", reasoningSummary: "auto", include: ["reasoning.encrypted_content"] } },
       } as never);
       const plan = (await (result as unknown as { output: Promise<ScannedPlan> }).output);
+      if (!plan || !Array.isArray(plan.walls) || plan.walls.length === 0) return { plan: null, error: "This doesn't look like a house blueprint — please upload a clear floor plan image." };
       return { plan, error: null };
     } catch (e) {
       console.error("scanBlueprint", e);
