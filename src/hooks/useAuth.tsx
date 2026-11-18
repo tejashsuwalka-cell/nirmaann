@@ -15,13 +15,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { setSession(s); setLoading(false); });
     (async () => {
+      try {
       // "Remember me" off: end the session once the browser tab session is gone.
       if (localStorage.getItem(REMEMBER_KEY) === "0" && !sessionStorage.getItem(ALIVE_KEY)) {
         await supabase.auth.signOut();
       }
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
-      setLoading(false);
+      } catch { setSession(null); }
+      finally { setLoading(false); }
     })();
     return () => sub.subscription.unsubscribe();
   }, []);

@@ -39,10 +39,12 @@ function Login() {
     setBusy(true);
     localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
     sessionStorage.setItem(ALIVE_KEY, "1");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) return setErr(error.message === "Invalid login credentials" ? "Incorrect email or password." : error.message);
-    nav({ to: "/dashboard" });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return setErr(error.message === "Invalid login credentials" ? "Incorrect email or password." : error.message);
+      nav({ to: "/dashboard" });
+    } catch { setErr("Could not connect. Please try again."); }
+    finally { setBusy(false); }
   };
 
   return (

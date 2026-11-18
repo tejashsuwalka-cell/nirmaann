@@ -38,4 +38,5 @@ use the editor.
 - 3D uses vanilla three.js via src/lib/scene3d.ts (createViewer/buildLayoutGroup); the 2D canvas and 3D share the same pixel coordinates (20px = 1m, offset 360/260).
 - Projects persist in the `projects` table (ground-floor layout as jsonb columns, upper floors in `floors` jsonb; blueprint scan/export logic is pure TS in src/lib/floors.ts and blueprint-export.ts, owner-only RLS); auth state comes from src/hooks/useAuth.tsx; dashboard/editor routes are ssr:false because the session lives in the browser.
 - Window frame and wall cutouts share bounds from src/lib/window-geometry.ts to prevent mismatched openings; split view draws both from one layout and finish choices remain preview-only.
+- Use the shared HouseLoader/LoadingStatus for asynchronous waits; house paths share one timeline and fade together so each loop resets cleanly without changing control dimensions.
 <!-- AGENT-MEMORY:END -->

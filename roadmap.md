@@ -25,3 +25,8 @@
 - [x] Add the supplied public LinkedIn profile link.
 - [x] Add the supplied public email and telephone links.
 - [x] Verify front-page scrolling, footer animation and terms on desktop and mobile.
+
+# Loading and workflow review
+- [x] Fix the synchronized house-building loop and reduced-motion display.
+- [x] Cover navigation, session checks, project actions, 3D preparation, scanning and export waits.
+- [x] Test signed-in creation, editing, saving, floors, exports and loading states on desktop/mobile.

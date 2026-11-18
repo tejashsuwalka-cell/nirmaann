@@ -41,14 +41,16 @@ function Register() {
     setBusy(true);
     localStorage.setItem(REMEMBER_KEY, "1");
     sessionStorage.setItem(ALIVE_KEY, "1");
+    try {
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: { data: { full_name: name.trim() }, emailRedirectTo: window.location.origin },
     });
-    setBusy(false);
     if (error) return setErr(error.message);
     if (data.session) nav({ to: "/dashboard" });
     else setInfo("Check your inbox to confirm your email, then sign in.");
+    } catch { setErr("Could not connect. Please try again."); }
+    finally { setBusy(false); }
   };
 
   return (

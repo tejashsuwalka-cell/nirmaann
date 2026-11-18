@@ -1,4 +1,4 @@
-import { HouseLoader } from "@/components/nirmaan/HouseLoader";
+import { HouseLoader, PageLoader } from "@/components/nirmaan/HouseLoader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,7 +52,7 @@ function Dashboard() {
     onError: () => toast.error("Could not delete your project. Please try again."),
   });
 
-  if (!user) return <div className="min-h-screen bg-canvas" />;
+  if (!user) return <PageLoader label={loading ? "Checking session" : "Opening sign in"} />;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -61,7 +61,7 @@ function Dashboard() {
           <Logo />
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground sm:inline">Logged in as <b className="text-foreground">{displayName(user)}</b></span>
-            <Button variant="ghost" disabled={signingOut} onClick={async () => { setSigningOut(true); try { await signOut(); nav({ to: "/" }); } catch { setSigningOut(false); toast.error("Could not sign out. Please try again."); } }}><LogOut /> Sign Out</Button>
+            <Button variant="ghost" disabled={signingOut} onClick={async () => { setSigningOut(true); try { await signOut(); nav({ to: "/" }); } catch { setSigningOut(false); toast.error("Could not sign out. Please try again."); } }}>{signingOut ? <HouseLoader label="Signing out" /> : <LogOut />} Sign Out</Button>
           </div>
         </div>
       </header>
@@ -73,7 +73,7 @@ function Dashboard() {
           </div>
           <form onSubmit={(e) => { e.preventDefault(); create.mutate(title.trim()); }} className="flex w-full flex-wrap gap-2 sm:w-auto">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="New project title" placeholder="Project name" className="h-10 min-w-0 flex-1 bg-popover sm:w-56" />
-            <Button type="submit" variant="hero" className="h-10" disabled={create.isPending}><Plus /> Create Project</Button>
+            <Button type="submit" variant="hero" className="h-10" disabled={create.isPending}>{create.isPending ? <HouseLoader label="Creating project" /> : <Plus />} Create Project</Button>
           </form>
         </div>
 
@@ -84,7 +84,7 @@ function Dashboard() {
             <div className="grid h-20 w-20 place-items-center rounded-3xl bg-secondary text-primary"><Ruler className="h-9 w-9" /></div>
             <h2 className="mt-5 text-xl font-bold text-foreground">No projects yet</h2>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">Create your first floor plan and watch it rise into 3D.</p>
-            <Button variant="hero" className="mt-6" onClick={() => create.mutate("My First Residence")}><Plus /> Create First Project</Button>
+            <Button variant="hero" className="mt-6" disabled={create.isPending} onClick={() => create.mutate("My First Residence")}>{create.isPending ? <HouseLoader label="Creating project" /> : <Plus />} Create First Project</Button>
           </div>
         ) : (
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -99,7 +99,7 @@ function Dashboard() {
                     <span className="mt-1 inline-block rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-secondary-foreground">{p.type}</span>
                   </div>
                   <Button variant="ghost" size="icon" aria-label={`Delete ${p.name}`} disabled={remove.isPending} className="text-muted-foreground hover:text-destructive"
-                    onClick={() => { if (confirm(`Delete "${p.name}"? This cannot be undone.`)) remove.mutate(p.id); }}><Trash2 /></Button>
+                    onClick={() => { if (confirm(`Delete "${p.name}"? This cannot be undone.`)) remove.mutate(p.id); }}>{remove.isPending && remove.variables === p.id ? <HouseLoader label="Deleting project" /> : <Trash2 />}</Button>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-1.5 px-5 text-xs font-semibold text-muted-foreground">
                   <span className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1"><SquareDashed className="h-3.5 w-3.5" />{p.walls.length} Walls</span>
