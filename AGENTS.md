@@ -39,4 +39,5 @@ use the editor.
 - Projects persist in the `projects` table (ground-floor layout as jsonb columns, upper floors in `floors` jsonb; blueprint scan/export logic is pure TS in src/lib/floors.ts and blueprint-export.ts, owner-only RLS); auth state comes from src/hooks/useAuth.tsx; dashboard/editor routes are ssr:false because the session lives in the browser.
 - Window frame and wall cutouts share bounds from src/lib/window-geometry.ts to prevent mismatched openings; split view draws both from one layout and finish choices remain preview-only.
 - Use the shared HouseLoader/LoadingStatus for asynchronous waits; house paths share one timeline and fade together so each loop resets cleanly without changing control dimensions.
+- Keep `.env` committed (publishable Cloud values only); removing it from git leaves the published build without its backend URL and blanks the live site.
 <!-- AGENT-MEMORY:END -->
