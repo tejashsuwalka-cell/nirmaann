@@ -10,6 +10,8 @@ NIRMAAN is a browser-based architectural studio. Draw a 2D floor plan, watch it 
 
 ## What you can do
 
+
+
 ### Draw your floor plan
 - Draw walls on a grid with live length labels and smart snapping
 - Add doors (with swing direction) and windows that snap onto walls
